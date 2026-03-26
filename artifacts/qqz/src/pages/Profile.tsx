@@ -137,7 +137,7 @@ export default function Profile() {
                     <CheckCircle size={12} /> Verified
                   </span>
                 ) : (
-                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Pending Verification</span>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">Pending Verification</span>
                 )}
                 {profile.professional.rating && (
                   <span className="flex items-center gap-1 text-sm">

@@ -37,11 +37,12 @@ export function Layout({ children }: LayoutProps) {
       <header className="bg-primary text-white shadow-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/home" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-              <span className="text-primary font-bold text-sm">QQ</span>
-            </div>
-            <span className="font-bold text-lg hidden sm:block">Quick Quotes Zimbabwe</span>
-            <span className="font-bold text-base sm:hidden">QQZ</span>
+            <img
+              src="/logo.png"
+              alt="Quick Quotes Zimbabwe"
+              className="h-8 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
           </Link>
           <div className="flex items-center gap-3">
             {user && (

@@ -45,9 +45,7 @@ export default function Register() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">QQ</span>
-          </div>
+          <img src="/logo.png" alt="Quick Quotes Zimbabwe" className="h-14 w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
           <p className="text-muted-foreground text-sm mt-1">Step {step} of 2</p>
           <div className="flex gap-2 mt-3 justify-center">
