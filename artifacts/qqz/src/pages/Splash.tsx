@@ -14,10 +14,12 @@ export default function Splash() {
   return (
     <div className="min-h-screen bg-primary flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center text-white px-6 py-12 text-center">
-        <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mb-6 shadow-lg">
-          <span className="text-primary font-bold text-2xl">QQ</span>
-        </div>
-        <h1 className="text-4xl font-bold mb-2">Quick Quotes Zimbabwe</h1>
+        <img
+          src="/logo.png"
+          alt="Quick Quotes Zimbabwe"
+          className="w-56 h-auto mb-6 drop-shadow-lg"
+          style={{ filter: "brightness(0) invert(1)" }}
+        />
         <p className="text-lg text-white/80 mb-2">Connect with trusted professionals</p>
         <p className="text-sm text-white/60 mb-10 max-w-sm">
           Get competitive quotes from verified local professionals for any service in Zimbabwe
@@ -35,7 +37,7 @@ export default function Splash() {
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link
             href="/register"
-            className="bg-accent text-primary font-bold py-3 px-8 rounded-xl text-center hover:bg-accent/90 transition-colors shadow-lg"
+            className="bg-accent text-white font-bold py-3 px-8 rounded-xl text-center hover:opacity-90 transition-opacity shadow-lg"
           >
             Get Started
           </Link>
