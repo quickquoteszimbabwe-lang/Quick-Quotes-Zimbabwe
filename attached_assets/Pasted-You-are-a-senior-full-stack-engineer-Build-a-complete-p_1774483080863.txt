@@ -1,0 +1,230 @@
+You are a senior full-stack engineer.
+
+Build a complete production-ready web and mobile-friendly application called “Quick Quotes Zimbabwe (QQZ)”.
+
+The platform is a service marketplace that connects customers with verified professionals. It must include frontend, backend API, database, authentication, and basic UI.
+
+Do not explain. Generate full working code with file structure.
+
+---
+
+TECH STACK
+
+Frontend:
+- React (Next.js preferred) OR simple React with Tailwind CSS
+- Mobile responsive UI
+
+Backend:
+- Node.js with Express
+
+Database:
+- PostgreSQL (preferred) OR Firebase Firestore
+
+Authentication:
+- JWT-based authentication OR Firebase Auth
+
+---
+
+CORE FEATURES
+
+1. User Roles
+- Customer
+- Professional
+- Admin
+
+---
+
+2. Authentication
+- Register (email, phone, password)
+- Login
+- Role selection after signup
+
+---
+
+3. Services
+
+Categories:
+- Construction (building, plumbing, electrical, painting, tiling)
+- Borehole services (drilling, deepening, pump installation)
+- Transport (moving, truck hire, delivery)
+- Cleaning (home, office, post-construction)
+- Agriculture (irrigation, farm labor)
+- Property services (inspection, supervision, diaspora management)
+
+---
+
+4. Workflow
+
+Customer:
+- Creates job request
+- Adds description, images, location, timeline
+
+Professional:
+- Views jobs
+- Submits quote (price, timeline, message)
+
+Customer:
+- Receives multiple quotes
+- Selects one professional
+
+System:
+- Creates job record
+- Tracks job progress
+
+Professional:
+- Updates job progress
+- Uploads images
+
+Customer:
+- Approves completion
+
+---
+
+5. Payments (Simulated for MVP)
+
+- Create payment records
+- Support:
+  - EcoCash
+  - Bank transfer
+  - Paynow
+- Track status:
+  - pending
+  - paid
+  - released
+
+---
+
+6. Reviews
+
+- Customer rates professional
+- 1–5 stars
+- Optional comment
+
+---
+
+7. Admin Panel
+
+Admin can:
+- View users
+- Approve professionals
+- View jobs
+- View payments
+- Suspend users
+
+---
+
+DATABASE STRUCTURE
+
+Tables:
+
+users
+- id
+- name
+- email
+- phone
+- password_hash
+- role
+- created_at
+
+professionals
+- id
+- user_id
+- services
+- rating
+- verified
+- completed_jobs
+
+jobs
+- id
+- customer_id
+- category
+- service
+- description
+- location
+- status
+- selected_professional
+- created_at
+
+quotes
+- id
+- job_id
+- professional_id
+- price
+- timeline
+- message
+
+payments
+- id
+- job_id
+- amount
+- status
+- method
+
+reviews
+- id
+- job_id
+- customer_id
+- professional_id
+- rating
+- comment
+
+---
+
+UI PAGES
+
+- Splash page
+- Login / Signup
+- Role selection
+- Home page (service categories)
+- Create job page
+- Quotes page
+- Professional dashboard
+- Job tracking page
+- Payments page
+- Profile page
+
+---
+
+DESIGN SYSTEM
+
+Colors:
+Primary: #0A3D62 (Deep Blue)
+Secondary: #1ABC9C (Emerald)
+Accent: #F4B400 (Gold)
+Background: #F8F9FA
+
+UI:
+- Clean cards
+- Rounded corners
+- Large buttons
+- Mobile-first design
+
+---
+
+NAVIGATION
+
+- Home
+- Jobs
+- Payments
+- Profile
+
+---
+
+REQUIREMENTS
+
+- Code must be complete and runnable
+- Include backend routes and API
+- Include database models/schema
+- Include frontend pages and navigation
+- Use best practices
+- Use modular file structure
+
+---
+
+OUTPUT FORMAT
+
+- Show full file structure
+- Provide all code files
+- Ensure the app can run after setup
+
+Do not give explanations. Generate full working project.

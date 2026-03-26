@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Quick Quotes Zimbabwe"
+version = "1.0.0"
+id = "artifacts/qqz"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26118
+
+[services.development]
+run = "pnpm --filter @workspace/qqz run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/qqz", "run", "build" ]
+publicDir = "artifacts/qqz/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26118"
+BASE_PATH = "/"
