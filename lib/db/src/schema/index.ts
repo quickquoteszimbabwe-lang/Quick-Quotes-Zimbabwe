@@ -4,3 +4,5 @@ export * from "./jobs";
 export * from "./quotes";
 export * from "./payments";
 export * from "./reviews";
+export * from "./phone-otps";
+export * from "./verification-documents";
