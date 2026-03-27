@@ -10,6 +10,9 @@ export const usersTable = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("customer"),
   suspended: boolean("suspended").notNull().default(false),
+  phoneVerified: boolean("phone_verified").notNull().default(false),
+  idVerified: boolean("id_verified").notNull().default(false),
+  faceVerified: boolean("face_verified").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
