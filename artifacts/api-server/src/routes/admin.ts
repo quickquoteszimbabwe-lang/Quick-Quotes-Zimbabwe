@@ -10,21 +10,34 @@ router.use(requireAuth, requireRole("admin"));
 
 router.get("/users", async (_req, res) => {
   const users = await db.select().from(usersTable);
-  res.json(users.map(u => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    phone: u.phone,
-    role: u.role,
-    suspended: u.suspended,
-    createdAt: u.createdAt.toISOString(),
-  })));
+  const professionals = await db.select().from(professionalsTable);
+  const profMap = new Map(professionals.map(p => [p.userId, p]));
+  res.json(users.map(u => {
+    const prof = profMap.get(u.id);
+    return {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      suspended: u.suspended,
+      createdAt: u.createdAt.toISOString(),
+      professionalId: prof?.id ?? null,
+      professionalVerified: prof?.verified ?? null,
+    };
+  }));
 });
 
 router.post("/users/:id/suspend", async (req, res) => {
   const userId = parseInt(req.params.id);
   await db.update(usersTable).set({ suspended: true }).where(eq(usersTable.id, userId));
   res.json({ message: "User suspended" });
+});
+
+router.post("/users/:id/unsuspend", async (req, res) => {
+  const userId = parseInt(req.params.id);
+  await db.update(usersTable).set({ suspended: false }).where(eq(usersTable.id, userId));
+  res.json({ message: "User unsuspended" });
 });
 
 router.post("/professionals/:id/approve", async (req, res) => {
@@ -44,6 +57,8 @@ router.post("/professionals/:id/approve", async (req, res) => {
 
 router.get("/jobs", async (_req, res) => {
   const jobs = await db.select().from(jobsTable);
+  const users = await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable);
+  const userMap = new Map(users.map(u => [u.id, u.name]));
   res.json(jobs.map(j => ({
     id: j.id,
     customerId: j.customerId,
@@ -55,7 +70,7 @@ router.get("/jobs", async (_req, res) => {
     status: j.status,
     selectedProfessionalId: j.selectedProfessionalId,
     createdAt: j.createdAt.toISOString(),
-    customerName: null,
+    customerName: userMap.get(j.customerId) ?? null,
   })));
 });
 

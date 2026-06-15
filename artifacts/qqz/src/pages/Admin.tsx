@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAdminGetUsers, useAdminGetJobs, useAdminGetPayments, useAdminSuspendUser, useAdminApproveProfessional } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAdminGetUsersQueryKey, getAdminGetJobsQueryKey } from "@workspace/api-client-react";
-import { Users, Briefcase, CreditCard, CheckCircle, Ban } from "lucide-react";
+import { Users, Briefcase, CreditCard, CheckCircle, Ban, ShieldCheck, RotateCcw } from "lucide-react";
 import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +16,9 @@ export default function Admin() {
   const { data: jobs } = useAdminGetJobs();
   const { data: payments } = useAdminGetPayments();
 
-  const suspendUser = useAdminSuspendUser({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getAdminGetUsersQueryKey() }) }
-  });
-  const approveProf = useAdminApproveProfessional({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getAdminGetUsersQueryKey() }) }
-  });
+  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: getAdminGetUsersQueryKey() });
+  const suspendUser = useAdminSuspendUser({ mutation: { onSuccess: invalidateUsers } });
+  const approveProf = useAdminApproveProfessional({ mutation: { onSuccess: invalidateUsers } });
 
   return (
     <div className="space-y-4">
@@ -72,6 +69,20 @@ export default function Admin() {
                   <p className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</p>
                 </div>
                 <div className="flex gap-2 flex-col sm:flex-row">
+                  {user.role === "professional" && (user as any).professionalId && !(user as any).professionalVerified && (
+                    <button
+                      onClick={() => approveProf.mutate({ id: (user as any).professionalId })}
+                      disabled={approveProf.isPending}
+                      className="flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-100"
+                    >
+                      <ShieldCheck size={12} /> Approve
+                    </button>
+                  )}
+                  {user.role === "professional" && (user as any).professionalVerified && (
+                    <span className="flex items-center gap-1 text-xs text-green-700 px-2 py-1">
+                      <CheckCircle size={12} /> Verified
+                    </span>
+                  )}
                   {!user.suspended && user.role !== "admin" && (
                     <button
                       onClick={() => suspendUser.mutate({ id: user.id })}
@@ -79,6 +90,20 @@ export default function Admin() {
                       className="flex items-center gap-1 text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded-lg hover:bg-red-100"
                     >
                       <Ban size={12} /> Suspend
+                    </button>
+                  )}
+                  {user.suspended && (
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api-server/api/admin/users/${user.id}/unsuspend`, {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${localStorage.getItem("qqz_token")}` }
+                        });
+                        invalidateUsers();
+                      }}
+                      className="flex items-center gap-1 text-xs bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded-lg hover:bg-orange-100"
+                    >
+                      <RotateCcw size={12} /> Unsuspend
                     </button>
                   )}
                 </div>
