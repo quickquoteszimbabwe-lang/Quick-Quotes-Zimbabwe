@@ -9,6 +9,9 @@ export interface AuthUser {
   role: "customer" | "professional" | "admin";
   suspended: boolean;
   createdAt: string;
+  phoneVerified: boolean;
+  idVerified: boolean;
+  faceVerified: boolean;
 }
 
 interface AuthContextType {
