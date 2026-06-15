@@ -3,7 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGetProfile, useUpdateProfile, useCreateProfessionalProfile, useUpdateProfessionalProfile } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetProfileQueryKey } from "@workspace/api-client-react";
-import { User, Star, CheckCircle, Edit2 } from "lucide-react";
+import { User, Star, CheckCircle, Edit2, Shield, Phone, CreditCard } from "lucide-react";
+import { Link } from "wouter";
 
 const SERVICES = [
   "Building", "Plumbing", "Electrical", "Painting", "Tiling",
@@ -214,6 +215,34 @@ export default function Profile() {
           )}
         </div>
       )}
+
+      <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
+        <h2 className="font-bold text-foreground flex items-center gap-2">
+          <Shield size={18} className="text-primary" /> Identity Verification
+        </h2>
+        <div className="space-y-2.5">
+          {[
+            { label: "Phone Verified", icon: <Phone size={15} />, verified: user?.phoneVerified },
+            { label: "ID Document", icon: <CreditCard size={15} />, verified: user?.idVerified },
+            { label: "Face Verification", icon: <User size={15} />, verified: user?.faceVerified },
+          ].map(({ label, icon, verified }) => (
+            <div key={label} className="flex items-center gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center ${verified ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"}`}>
+                {icon}
+              </div>
+              <span className="text-sm text-foreground flex-1">{label}</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${verified ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                {verified ? "Verified" : "Pending"}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Link href="/verify">
+          <button className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+            <Shield size={15} /> Manage Verification Documents
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }

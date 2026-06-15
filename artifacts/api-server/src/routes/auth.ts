@@ -47,6 +47,9 @@ router.get("/me", async (req, res) => {
     phone: user.phone,
     role: user.role,
     suspended: user.suspended,
+    phoneVerified: user.phoneVerified,
+    idVerified: user.idVerified,
+    faceVerified: user.faceVerified,
     createdAt: user.createdAt.toISOString(),
   });
 });
@@ -65,6 +68,20 @@ router.post("/register", async (req, res) => {
     return;
   }
 
+  let phoneVerified = false;
+  if (phone) {
+    const normalized = phone.replace(/\s+/g, "");
+    const [otp] = await db
+      .select()
+      .from(phoneOtpsTable)
+      .where(and(eq(phoneOtpsTable.phone, normalized), eq(phoneOtpsTable.used, true)))
+      .orderBy(desc(phoneOtpsTable.createdAt))
+      .limit(1);
+    if (otp && otp.createdAt > new Date(Date.now() - 30 * 60 * 1000)) {
+      phoneVerified = true;
+    }
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
   const [user] = await db.insert(usersTable).values({
     name,
@@ -72,6 +89,7 @@ router.post("/register", async (req, res) => {
     phone: phone ?? null,
     passwordHash,
     role,
+    phoneVerified,
   }).returning();
 
   const token = createToken(user.id, user.role);
@@ -84,6 +102,9 @@ router.post("/register", async (req, res) => {
       phone: user.phone,
       role: user.role,
       suspended: user.suspended,
+      phoneVerified: user.phoneVerified,
+      idVerified: user.idVerified,
+      faceVerified: user.faceVerified,
       createdAt: user.createdAt.toISOString(),
     },
   });
@@ -120,6 +141,9 @@ router.post("/login", async (req, res) => {
       phone: user.phone,
       role: user.role,
       suspended: user.suspended,
+      phoneVerified: user.phoneVerified,
+      idVerified: user.idVerified,
+      faceVerified: user.faceVerified,
       createdAt: user.createdAt.toISOString(),
     },
   });

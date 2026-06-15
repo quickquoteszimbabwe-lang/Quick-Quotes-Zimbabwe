@@ -1,0 +1,2 @@
+- [QQZ API Types](qqz-api-types.md) — CreateQuoteRequest uses `price`/`timeline`/`message` (not amount/note); useSelectQuote takes `{ id: jobId, data: { quoteId } }`.
+- [QQZ DB Push](qqz-db-push.md) — DB push script is `pnpm --filter @workspace/db run push` (not `db:push`).
