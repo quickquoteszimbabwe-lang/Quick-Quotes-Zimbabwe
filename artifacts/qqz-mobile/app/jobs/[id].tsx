@@ -19,6 +19,8 @@ import {
   useCreateQuote,
   useSelectQuote,
   useCreateReview,
+  useCompleteJob,
+  useCreatePayment,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
@@ -51,6 +53,8 @@ export default function JobDetailScreen() {
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"ecocash" | "bank_transfer" | "paynow">("ecocash");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const { data: job, isLoading } = useQuery({
     queryKey: getGetJobQueryKey(jobId),
@@ -70,6 +74,14 @@ export default function JobDetailScreen() {
 
   const { mutate: createReview, isPending: reviewPending } = useCreateReview({
     mutation: { onSuccess: () => { setShowReviewForm(false); invalidate(); } },
+  });
+
+  const { mutate: completeJob, isPending: completingJob } = useCompleteJob({
+    mutation: { onSuccess: invalidate },
+  });
+
+  const { mutate: createPayment, isPending: paymentPending } = useCreatePayment({
+    mutation: { onSuccess: () => { setShowPaymentForm(false); invalidate(); } },
   });
 
   if (isLoading) {
@@ -153,8 +165,7 @@ export default function JobDetailScreen() {
           <View style={styles.metaGrid}>
             {j.location && <MetaItem icon="map-pin" value={j.location} />}
             {j.timeline && <MetaItem icon="clock" value={j.timeline} />}
-            {j.budget && <MetaItem icon="dollar-sign" value={`Budget: $${j.budget}`} />}
-            {j.customer?.name && <MetaItem icon="user" value={j.customer.name} />}
+            {j.customerName && <MetaItem icon="user" value={j.customerName} />}
           </View>
         </View>
 
@@ -180,6 +191,72 @@ export default function JobDetailScreen() {
                 <Text style={styles.descFull}>{j.description}</Text>
               </>
             ) : null}
+
+            {isCustomer && j.status === "in_progress" && (
+              <View style={styles.actionCard}>
+                <Text style={styles.sectionLabel}>Job Progress</Text>
+                {!j.payment ? (
+                  showPaymentForm ? (
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ fontSize: 14, color: Colors.text, fontFamily: "Inter_500Medium" }}>Payment Method</Text>
+                      {(["ecocash", "bank_transfer", "paynow"] as const).map((m) => (
+                        <TouchableOpacity
+                          key={m}
+                          style={[styles.methodBtn, paymentMethod === m && styles.methodBtnActive]}
+                          onPress={() => setPaymentMethod(m)}
+                        >
+                          <View style={[styles.methodRadio, paymentMethod === m && styles.methodRadioActive]} />
+                          <Text style={[styles.methodLabel, paymentMethod === m && styles.methodLabelActive]}>
+                            {m === "ecocash" ? "EcoCash" : m === "bank_transfer" ? "Bank Transfer" : "Paynow"}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                      <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
+                        <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPaymentForm(false)}>
+                          <Text style={styles.cancelBtnText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.btn, { flex: 1 }, paymentPending && { opacity: 0.6 }]}
+                          disabled={paymentPending}
+                          onPress={() => {
+                            const sel = quotes.find((q: any) => q.status === "selected");
+                            createPayment({ data: { jobId, amount: sel?.price ?? 0, method: paymentMethod } });
+                          }}
+                        >
+                          {paymentPending ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.btnText}>Confirm Payment</Text>}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity style={[styles.btn, { backgroundColor: Colors.accent }]} onPress={() => setShowPaymentForm(true)}>
+                      <Feather name="credit-card" size={15} color={Colors.white} />
+                      <Text style={styles.btnText}>Record Payment</Text>
+                    </TouchableOpacity>
+                  )
+                ) : (
+                  <View style={styles.paymentRow}>
+                    <Feather name="check-circle" size={16} color={Colors.success} />
+                    <Text style={styles.paymentText}>
+                      Payment recorded · {j.payment.method?.replace("_", " ")} · ${j.payment.amount}
+                    </Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={[styles.btn, { backgroundColor: Colors.success, marginTop: 8 }, completingJob && { opacity: 0.6 }]}
+                  disabled={completingJob}
+                  onPress={() =>
+                    Alert.alert("Complete Job", "Mark this job as completed?", [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Complete", onPress: () => completeJob({ id: jobId }) },
+                    ])
+                  }
+                >
+                  {completingJob ? <ActivityIndicator color={Colors.white} /> : (
+                    <><Feather name="check-circle" size={15} color={Colors.white} /><Text style={styles.btnText}>Approve Completion</Text></>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
 
             {j.status === "completed" && isCustomer && selectedQuote && !hasReview && (
               <View style={styles.reviewCard}>
@@ -389,4 +466,15 @@ const styles = StyleSheet.create({
   reviewComment: { fontSize: 14, color: Colors.text, fontFamily: "Inter_400Regular", lineHeight: 20, fontStyle: "italic" },
   emptyBox: { alignItems: "center", paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 14, color: Colors.textSecondary, fontFamily: "Inter_400Regular" },
+  actionCard: { backgroundColor: Colors.card, borderRadius: 16, padding: 16, gap: 12 },
+  methodBtn: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.background },
+  methodBtnActive: { borderColor: Colors.primary, backgroundColor: "#EEF4FB" },
+  methodRadio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: Colors.border },
+  methodRadioActive: { borderColor: Colors.primary, backgroundColor: Colors.primary },
+  methodLabel: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.text },
+  methodLabelActive: { fontFamily: "Inter_600SemiBold", color: Colors.primary },
+  cancelBtn: { flex: 1, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingVertical: 12 },
+  cancelBtnText: { fontSize: 14, color: Colors.textSecondary, fontFamily: "Inter_500Medium" },
+  paymentRow: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: Colors.successLight, padding: 12, borderRadius: 12 },
+  paymentText: { fontSize: 13, color: Colors.success, fontFamily: "Inter_500Medium", flex: 1 },
 });

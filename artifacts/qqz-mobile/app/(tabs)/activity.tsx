@@ -107,8 +107,8 @@ export default function ActivityScreen() {
                 </View>
                 <View style={styles.amountRow}>
                   <Feather name="dollar-sign" size={14} color={Colors.primary} />
-                  <Text style={styles.amount}>{formatAmount(item.amount)}</Text>
-                  {!!item.note && <Text style={styles.note} numberOfLines={1}>{item.note}</Text>}
+                  <Text style={styles.amount}>{formatAmount(item.price)}</Text>
+                  {!!item.message && <Text style={styles.note} numberOfLines={1}>{item.message}</Text>}
                 </View>
                 {item.status === "selected" && (
                   <View style={styles.selectedBanner}>
