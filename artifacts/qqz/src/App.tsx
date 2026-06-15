@@ -16,6 +16,7 @@ import JobDetail from "@/pages/JobDetail";
 import MyQuotes from "@/pages/MyQuotes";
 import Payments from "@/pages/Payments";
 import Profile from "@/pages/Profile";
+import Verify from "@/pages/Verify";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
@@ -96,6 +97,9 @@ function AppRoutes() {
       </Route>
       <Route path="/profile">
         <ProtectedRoute component={Profile} />
+      </Route>
+      <Route path="/verify">
+        <ProtectedRoute component={Verify} />
       </Route>
       <Route path="/admin">
         <ProtectedRoute component={Admin} roles={["admin"]} />
