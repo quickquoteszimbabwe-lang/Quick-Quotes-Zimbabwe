@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { jobsTable, usersTable, quotesTable, professionalsTable, paymentsTable, reviewsTable } from "@workspace/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateJobBody, UpdateJobBody, SelectQuoteBody } from "@workspace/api-zod";
+import { getFacePhotoMap } from "../lib/photo";
 
 const router: IRouter = Router();
 
@@ -45,7 +46,7 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
 
   const customerIds = [...new Set(jobs.map(j => j.customerId))];
   const customers = customerIds.length > 0
-    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(customerIds.map(id => sql`${id}`), sql`, `)}])`)
+    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(inArray(usersTable.id, customerIds))
     : [];
   const customerMap = new Map(customers.map(c => [c.id, c.name]));
 
@@ -96,13 +97,15 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
         rating: professionalsTable.rating,
         verified: professionalsTable.verified,
         completedJobs: professionalsTable.completedJobs,
-      }).from(professionalsTable).where(sql`${professionalsTable.id} = ANY(ARRAY[${sql.join(professionalIds.map(id => sql`${id}`), sql`, `)}])`)
+        experience: professionalsTable.experience,
+      }).from(professionalsTable).where(inArray(professionalsTable.id, professionalIds))
     : [];
   const professionalUserIds = professionals.map(p => p.userId);
   const professionalUsers = professionalUserIds.length > 0
-    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(professionalUserIds.map(id => sql`${id}`), sql`, `)}])`)
+    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(inArray(usersTable.id, professionalUserIds))
     : [];
-  const profMap = new Map(professionals.map(p => [p.id, { ...p, name: professionalUsers.find(u => u.id === p.userId)?.name }]));
+  const photoMap = await getFacePhotoMap(professionalUserIds);
+  const profMap = new Map(professionals.map(p => [p.id, { ...p, name: professionalUsers.find(u => u.id === p.userId)?.name, photoUrl: photoMap.get(p.userId) ?? null }]));
 
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.jobId, jobId));
   const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.jobId, jobId));
@@ -129,11 +132,14 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
         price: Number(q.price),
         timeline: q.timeline,
         message: q.message,
+        items: q.items,
         createdAt: q.createdAt.toISOString(),
         professionalName: prof?.name ?? null,
         professionalRating: prof?.rating ? Number(prof.rating) : null,
         professionalVerified: prof?.verified ?? null,
         professionalCompletedJobs: prof?.completedJobs ?? null,
+        professionalPhotoUrl: prof?.photoUrl ?? null,
+        professionalExperience: prof?.experience ?? null,
       };
     }),
     payment: payment ? {

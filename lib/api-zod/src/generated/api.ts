@@ -87,6 +87,8 @@ export const GetProfileResponse = zod.object({
       completedJobs: zod.number(),
       bio: zod.string().nullish(),
       location: zod.string().nullish(),
+      experience: zod.string().nullish(),
+      photoUrl: zod.string().nullish(),
     })
     .optional(),
 });
@@ -117,6 +119,8 @@ export const UpdateProfileResponse = zod.object({
       completedJobs: zod.number(),
       bio: zod.string().nullish(),
       location: zod.string().nullish(),
+      experience: zod.string().nullish(),
+      photoUrl: zod.string().nullish(),
     })
     .optional(),
 });
@@ -133,6 +137,8 @@ export const GetProfessionalProfileResponse = zod.object({
   completedJobs: zod.number(),
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
+  experience: zod.string().nullish(),
+  photoUrl: zod.string().nullish(),
 });
 
 /**
@@ -142,6 +148,7 @@ export const CreateProfessionalProfileBody = zod.object({
   services: zod.array(zod.string()),
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
+  experience: zod.string().nullish(),
 });
 
 /**
@@ -151,6 +158,7 @@ export const UpdateProfessionalProfileBody = zod.object({
   services: zod.array(zod.string()).optional(),
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
+  experience: zod.string().nullish(),
 });
 
 export const UpdateProfessionalProfileResponse = zod.object({
@@ -162,6 +170,8 @@ export const UpdateProfessionalProfileResponse = zod.object({
   completedJobs: zod.number(),
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
+  experience: zod.string().nullish(),
+  photoUrl: zod.string().nullish(),
 });
 
 /**
@@ -227,11 +237,22 @@ export const GetJobResponse = zod.object({
       price: zod.number(),
       timeline: zod.string(),
       message: zod.string().nullish(),
+      items: zod
+        .array(
+          zod.object({
+            description: zod.string(),
+            quantity: zod.number(),
+            unitPrice: zod.number(),
+          }),
+        )
+        .optional(),
       createdAt: zod.string(),
       professionalName: zod.string().nullish(),
       professionalRating: zod.number().nullish(),
       professionalVerified: zod.boolean().nullish(),
       professionalCompletedJobs: zod.number().nullish(),
+      professionalPhotoUrl: zod.string().nullish(),
+      professionalExperience: zod.string().nullish(),
     }),
   ),
   payment: zod
@@ -339,6 +360,15 @@ export const CreateQuoteBody = zod.object({
   price: zod.number(),
   timeline: zod.string(),
   message: zod.string().nullish(),
+  items: zod
+    .array(
+      zod.object({
+        description: zod.string(),
+        quantity: zod.number(),
+        unitPrice: zod.number(),
+      }),
+    )
+    .optional(),
 });
 
 /**
@@ -351,9 +381,20 @@ export const GetMyQuotesResponseItem = zod.object({
   price: zod.number(),
   timeline: zod.string(),
   message: zod.string().nullish(),
+  items: zod
+    .array(
+      zod.object({
+        description: zod.string(),
+        quantity: zod.number(),
+        unitPrice: zod.number(),
+      }),
+    )
+    .optional(),
   createdAt: zod.string(),
   professionalName: zod.string().nullish(),
   professionalRating: zod.number().nullish(),
+  professionalPhotoUrl: zod.string().nullish(),
+  professionalExperience: zod.string().nullish(),
 });
 export const GetMyQuotesResponse = zod.array(GetMyQuotesResponseItem);
 
@@ -473,6 +514,8 @@ export const AdminApproveProfessionalResponse = zod.object({
   completedJobs: zod.number(),
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
+  experience: zod.string().nullish(),
+  photoUrl: zod.string().nullish(),
 });
 
 /**

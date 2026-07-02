@@ -1,6 +1,12 @@
-import { pgTable, serial, integer, numeric, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, numeric, text, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+export interface QuoteLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
 
 export const quotesTable = pgTable("quotes", {
   id: serial("id").primaryKey(),
@@ -9,6 +15,7 @@ export const quotesTable = pgTable("quotes", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   timeline: text("timeline").notNull(),
   message: text("message"),
+  items: jsonb("items").$type<QuoteLineItem[]>().notNull().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

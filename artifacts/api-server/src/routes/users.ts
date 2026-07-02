@@ -4,6 +4,7 @@ import { usersTable, professionalsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { UpdateProfileBody, CreateProfessionalProfileBody, UpdateProfessionalProfileBody } from "@workspace/api-zod";
+import { getFacePhotoForUser } from "../lib/photo";
 
 const router: IRouter = Router();
 
@@ -15,6 +16,7 @@ router.get("/profile", requireAuth, async (req: AuthRequest, res) => {
     return;
   }
   const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
+  const photoUrl = prof ? await getFacePhotoForUser(userId) : null;
   res.json({
     id: user.id,
     name: user.name,
@@ -32,6 +34,8 @@ router.get("/profile", requireAuth, async (req: AuthRequest, res) => {
       completedJobs: prof.completedJobs,
       bio: prof.bio,
       location: prof.location,
+      experience: prof.experience,
+      photoUrl,
     } : undefined,
   });
 });
@@ -49,6 +53,7 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
 
   const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
   const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
+  const photoUrl = prof ? await getFacePhotoForUser(userId) : null;
   res.json({
     id: user.id,
     name: user.name,
@@ -66,6 +71,8 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
       completedJobs: prof.completedJobs,
       bio: prof.bio,
       location: prof.location,
+      experience: prof.experience,
+      photoUrl,
     } : undefined,
   });
 });
@@ -77,6 +84,7 @@ router.get("/professional", requireAuth, async (req: AuthRequest, res) => {
     res.status(404).json({ error: "Professional profile not found" });
     return;
   }
+  const photoUrl = await getFacePhotoForUser(userId);
   res.json({
     id: prof.id,
     userId: prof.userId,
@@ -86,6 +94,8 @@ router.get("/professional", requireAuth, async (req: AuthRequest, res) => {
     completedJobs: prof.completedJobs,
     bio: prof.bio,
     location: prof.location,
+    experience: prof.experience,
+    photoUrl,
   });
 });
 
@@ -101,7 +111,9 @@ router.post("/professional", requireAuth, async (req: AuthRequest, res) => {
     services: parsed.data.services,
     bio: parsed.data.bio ?? null,
     location: parsed.data.location ?? null,
+    experience: parsed.data.experience ?? null,
   }).returning();
+  const photoUrl = await getFacePhotoForUser(userId);
   res.status(201).json({
     id: prof.id,
     userId: prof.userId,
@@ -111,6 +123,8 @@ router.post("/professional", requireAuth, async (req: AuthRequest, res) => {
     completedJobs: prof.completedJobs,
     bio: prof.bio,
     location: prof.location,
+    experience: prof.experience,
+    photoUrl,
   });
 });
 
@@ -125,8 +139,10 @@ router.patch("/professional", requireAuth, async (req: AuthRequest, res) => {
   if (parsed.data.services !== undefined) updates.services = parsed.data.services;
   if (parsed.data.bio !== undefined) updates.bio = parsed.data.bio;
   if (parsed.data.location !== undefined) updates.location = parsed.data.location;
+  if (parsed.data.experience !== undefined) updates.experience = parsed.data.experience;
 
   const [prof] = await db.update(professionalsTable).set(updates).where(eq(professionalsTable.userId, userId)).returning();
+  const photoUrl = await getFacePhotoForUser(userId);
   res.json({
     id: prof.id,
     userId: prof.userId,
@@ -136,6 +152,8 @@ router.patch("/professional", requireAuth, async (req: AuthRequest, res) => {
     completedJobs: prof.completedJobs,
     bio: prof.bio,
     location: prof.location,
+    experience: prof.experience,
+    photoUrl,
   });
 });
 

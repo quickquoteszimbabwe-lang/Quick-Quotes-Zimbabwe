@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { paymentsTable, jobsTable } from "@workspace/db/schema";
-import { eq, or, sql } from "drizzle-orm";
+import { eq, or, inArray } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreatePaymentBody, UpdatePaymentStatusBody } from "@workspace/api-zod";
 
@@ -33,7 +33,7 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
   const jobDescMap = new Map(myJobs.map(j => [j.id, j.description]));
 
   const payments = await db.select().from(paymentsTable)
-    .where(sql`${paymentsTable.jobId} = ANY(ARRAY[${sql.join(jobIds.map(id => sql`${id}`), sql`, `)}])`);
+    .where(inArray(paymentsTable.jobId, jobIds));
 
   res.json(payments.map(p => formatPayment(p, jobDescMap.get(p.jobId))));
 });

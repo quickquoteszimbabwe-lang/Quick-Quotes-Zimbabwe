@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reviewsTable, usersTable, professionalsTable } from "@workspace/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateReviewBody } from "@workspace/api-zod";
 
@@ -50,7 +50,7 @@ router.get("/professional/:professionalId", requireAuth, async (req: AuthRequest
   const customerIds = [...new Set(reviews.map(r => r.customerId))];
   const customers = customerIds.length > 0
     ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable)
-        .where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(customerIds.map(id => sql`${id}`), sql`, `)}])`)
+        .where(inArray(usersTable.id, customerIds))
     : [];
   const customerMap = new Map(customers.map(c => [c.id, c.name]));
 

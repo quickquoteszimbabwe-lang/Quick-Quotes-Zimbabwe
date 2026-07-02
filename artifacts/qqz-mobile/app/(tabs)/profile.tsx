@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -98,9 +99,13 @@ export default function ProfileScreen() {
       contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 20, 40) }}
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
+        {(profile as any)?.professional?.photoUrl ? (
+          <Image source={{ uri: (profile as any).professional.photoUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </View>
+        )}
         <Text style={styles.userName}>{user?.name}</Text>
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>
@@ -136,6 +141,12 @@ export default function ProfileScreen() {
           <View style={styles.card}>
             {(profile as any)?.professional ? (
               <View style={{ gap: 8 }}>
+                {(profile as any).professional.experience && (
+                  <View>
+                    <Text style={styles.profLabel}>Experience</Text>
+                    <Text style={styles.profValue}>{(profile as any).professional.experience}</Text>
+                  </View>
+                )}
                 {(profile as any).professional.services?.length > 0 && (
                   <View>
                     <Text style={styles.profLabel}>Services</Text>
@@ -193,6 +204,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   header: { alignItems: "center", paddingHorizontal: 20, paddingBottom: 24 },
   avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center", marginBottom: 12 },
+  avatarImage: { width: 80, height: 80, borderRadius: 40, marginBottom: 12, borderWidth: 2, borderColor: Colors.border },
   avatarText: { color: Colors.white, fontSize: 28, fontFamily: "Inter_700Bold" },
   userName: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 6 },
   roleBadge: { backgroundColor: Colors.primary + "15", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginBottom: 6 },

@@ -12,4 +12,6 @@ export interface CreateProfessionalRequest {
   bio?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  experience?: string | null;
 }
