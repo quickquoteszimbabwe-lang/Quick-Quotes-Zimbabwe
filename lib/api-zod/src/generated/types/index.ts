@@ -27,6 +27,7 @@ export * from "./paymentStatus";
 export * from "./professional";
 export * from "./quote";
 export * from "./quoteDetail";
+export * from "./quoteItem";
 export * from "./registerRequest";
 export * from "./registerRequestRole";
 export * from "./review";

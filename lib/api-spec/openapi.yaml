@@ -663,6 +663,10 @@ components:
           type: ["string", "null"]
         location:
           type: ["string", "null"]
+        experience:
+          type: ["string", "null"]
+        photoUrl:
+          type: ["string", "null"]
       required:
         - id
         - userId
@@ -731,6 +735,8 @@ components:
           type: ["string", "null"]
         location:
           type: ["string", "null"]
+        experience:
+          type: ["string", "null"]
       required:
         - services
 
@@ -744,6 +750,8 @@ components:
         bio:
           type: ["string", "null"]
         location:
+          type: ["string", "null"]
+        experience:
           type: ["string", "null"]
 
     Job:
@@ -861,6 +869,20 @@ components:
       required:
         - quoteId
 
+    QuoteItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+      required:
+        - description
+        - quantity
+        - unitPrice
+
     Quote:
       type: object
       properties:
@@ -876,12 +898,20 @@ components:
           type: string
         message:
           type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteItem"
         createdAt:
           type: string
         professionalName:
           type: ["string", "null"]
         professionalRating:
           type: ["number", "null"]
+        professionalPhotoUrl:
+          type: ["string", "null"]
+        professionalExperience:
+          type: ["string", "null"]
       required:
         - id
         - jobId
@@ -905,6 +935,10 @@ components:
           type: string
         message:
           type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteItem"
         createdAt:
           type: string
         professionalName:
@@ -915,6 +949,10 @@ components:
           type: ["boolean", "null"]
         professionalCompletedJobs:
           type: ["integer", "null"]
+        professionalPhotoUrl:
+          type: ["string", "null"]
+        professionalExperience:
+          type: ["string", "null"]
       required:
         - id
         - jobId
@@ -934,6 +972,10 @@ components:
           type: string
         message:
           type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteItem"
       required:
         - jobId
         - price

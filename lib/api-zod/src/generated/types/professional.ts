@@ -18,4 +18,8 @@ export interface Professional {
   bio?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  experience?: string | null;
+  /** @nullable */
+  photoUrl?: string | null;
 }

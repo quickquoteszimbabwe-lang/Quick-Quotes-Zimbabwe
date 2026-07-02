@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -24,6 +25,14 @@ import {
 } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
+
+interface QuoteLineItem {
+  description: string;
+  quantity: string;
+  unitPrice: string;
+}
+
+const emptyItem = (): QuoteLineItem => ({ description: "", quantity: "1", unitPrice: "" });
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   open: { bg: "#DCFCE7", text: "#15803D" },
@@ -47,7 +56,7 @@ export default function JobDetailScreen() {
   const jobId = parseInt(id ?? "0");
 
   const [tab, setTab] = useState<"details" | "quotes">("details");
-  const [quotePrice, setQuotePrice] = useState("");
+  const [quoteItems, setQuoteItems] = useState<QuoteLineItem[]>([emptyItem()]);
   const [quoteTimeline, setQuoteTimeline] = useState("Flexible");
   const [quoteMessage, setQuoteMessage] = useState("");
   const [rating, setRating] = useState(5);
@@ -65,7 +74,7 @@ export default function JobDetailScreen() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(jobId) });
 
   const { mutate: submitQuote, isPending: submittingQuote } = useCreateQuote({
-    mutation: { onSuccess: () => { setQuotePrice(""); setQuoteMessage(""); invalidate(); } },
+    mutation: { onSuccess: () => { setQuoteItems([emptyItem()]); setQuoteMessage(""); invalidate(); } },
   });
 
   const { mutate: selectQuote, isPending: selectingQuote } = useSelectQuote({
@@ -114,17 +123,43 @@ export default function JobDetailScreen() {
   const selectedQuote = quotes.find((q: any) => q.status === "selected");
   const hasReview = !!j.review;
 
+  const quoteTotal = quoteItems.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    return sum + qty * price;
+  }, 0);
+
+  function updateQuoteItem(index: number, field: keyof QuoteLineItem, value: string) {
+    setQuoteItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+  }
+
+  function addQuoteItem() {
+    setQuoteItems((prev) => [...prev, emptyItem()]);
+  }
+
+  function removeQuoteItem(index: number) {
+    setQuoteItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  }
+
   function handleSubmitQuote() {
-    if (!quotePrice || isNaN(parseFloat(quotePrice))) {
-      Alert.alert("Invalid price", "Please enter a valid price");
+    const items = quoteItems
+      .filter((item) => item.description.trim() !== "")
+      .map((item) => ({
+        description: item.description,
+        quantity: parseFloat(item.quantity) || 0,
+        unitPrice: parseFloat(item.unitPrice) || 0,
+      }));
+    if (items.length === 0) {
+      Alert.alert("Missing items", "Add at least one line item to your quote");
       return;
     }
     submitQuote({
       data: {
         jobId,
-        price: parseFloat(quotePrice),
+        price: quoteTotal,
         timeline: quoteTimeline || "Flexible",
         message: quoteMessage || null,
+        items,
       },
     });
   }
@@ -314,15 +349,51 @@ export default function JobDetailScreen() {
           <View style={styles.section}>
             {isProfessional && j.status === "open" && !myQuote && (
               <View style={styles.quoteForm}>
-                <Text style={styles.sectionLabel}>Submit Your Quote</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Your price (USD)"
-                  placeholderTextColor={Colors.textTertiary}
-                  value={quotePrice}
-                  onChangeText={(t) => setQuotePrice(t.replace(/[^0-9.]/g, ""))}
-                  keyboardType="decimal-pad"
-                />
+                <Text style={styles.sectionLabel}>Quotation Items</Text>
+                {quoteItems.map((item, idx) => (
+                  <View key={idx} style={styles.lineItemRow}>
+                    <TextInput
+                      style={[styles.input, styles.lineItemDesc]}
+                      placeholder="Description"
+                      placeholderTextColor={Colors.textTertiary}
+                      value={item.description}
+                      onChangeText={(t) => updateQuoteItem(idx, "description", t)}
+                    />
+                    <TextInput
+                      style={[styles.input, styles.lineItemQty]}
+                      placeholder="Qty"
+                      placeholderTextColor={Colors.textTertiary}
+                      value={item.quantity}
+                      onChangeText={(t) => updateQuoteItem(idx, "quantity", t.replace(/[^0-9.]/g, ""))}
+                      keyboardType="decimal-pad"
+                    />
+                    <TextInput
+                      style={[styles.input, styles.lineItemPrice]}
+                      placeholder="Price"
+                      placeholderTextColor={Colors.textTertiary}
+                      value={item.unitPrice}
+                      onChangeText={(t) => updateQuoteItem(idx, "unitPrice", t.replace(/[^0-9.]/g, ""))}
+                      keyboardType="decimal-pad"
+                    />
+                    <TouchableOpacity
+                      onPress={() => removeQuoteItem(idx)}
+                      disabled={quoteItems.length === 1}
+                      style={{ opacity: quoteItems.length === 1 ? 0.3 : 1, padding: 6 }}
+                    >
+                      <Feather name="trash-2" size={16} color={Colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity style={styles.addItemBtn} onPress={addQuoteItem}>
+                  <Feather name="plus" size={14} color={Colors.primary} />
+                  <Text style={styles.addItemText}>Add line item</Text>
+                </TouchableOpacity>
+
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalValue}>${quoteTotal.toFixed(2)}</Text>
+                </View>
+
                 <TextInput
                   style={styles.input}
                   placeholder="Timeline (e.g. 2 days, 1 week)"
@@ -361,6 +432,16 @@ export default function JobDetailScreen() {
                 </View>
                 <Text style={styles.quoteAmount}>${myQuote.price}</Text>
                 <Text style={styles.quoteNote}>Timeline: {myQuote.timeline}</Text>
+                {myQuote.items?.length > 0 && (
+                  <View style={styles.itemsBox}>
+                    {myQuote.items.map((it: any, i: number) => (
+                      <View key={i} style={styles.itemRow}>
+                        <Text style={styles.itemDesc} numberOfLines={1}>{it.description}</Text>
+                        <Text style={styles.itemMeta}>{it.quantity} x ${Number(it.unitPrice).toFixed(2)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
                 {myQuote.message && <Text style={styles.quoteNote}>{myQuote.message}</Text>}
               </View>
             )}
@@ -375,16 +456,32 @@ export default function JobDetailScreen() {
             {quotes.map((q: any) => (
               <View key={q.id} style={styles.quoteCard}>
                 <View style={styles.quoteTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.quoteLabel}>{q.professionalName ?? `Professional #${q.professionalId}`}</Text>
-                    {q.professionalRating && (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
-                        <Feather name="star" size={12} color={Colors.accent} />
-                        <Text style={{ fontSize: 12, color: Colors.textSecondary, fontFamily: "Inter_400Regular" }}>
-                          {Number(q.professionalRating).toFixed(1)}
-                        </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                    {q.professionalPhotoUrl ? (
+                      <Image source={{ uri: q.professionalPhotoUrl }} style={styles.quoteAvatar} />
+                    ) : (
+                      <View style={styles.quoteAvatarPlaceholder}>
+                        <Feather name="user" size={16} color={Colors.primary} />
                       </View>
                     )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.quoteLabel}>{q.professionalName ?? `Professional #${q.professionalId}`}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+                        {q.professionalRating && (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <Feather name="star" size={12} color={Colors.accent} />
+                            <Text style={{ fontSize: 12, color: Colors.textSecondary, fontFamily: "Inter_400Regular" }}>
+                              {Number(q.professionalRating).toFixed(1)}
+                            </Text>
+                          </View>
+                        )}
+                        {q.professionalExperience && (
+                          <Text style={{ fontSize: 12, color: Colors.textSecondary, fontFamily: "Inter_400Regular" }}>
+                            {q.professionalExperience} exp.
+                          </Text>
+                        )}
+                      </View>
+                    </View>
                   </View>
                   <View style={[styles.quoteBadge, { backgroundColor: QUOTE_COLORS[q.status]?.bg ?? "#F1F5F9" }]}>
                     <Text style={[styles.quoteBadgeText, { color: QUOTE_COLORS[q.status]?.text ?? Colors.textSecondary }]}>{q.status}</Text>
@@ -392,6 +489,16 @@ export default function JobDetailScreen() {
                 </View>
                 <Text style={styles.quoteAmount}>${q.price}</Text>
                 <Text style={styles.quoteNote}>Timeline: {q.timeline}</Text>
+                {q.items?.length > 0 && (
+                  <View style={styles.itemsBox}>
+                    {q.items.map((it: any, i: number) => (
+                      <View key={i} style={styles.itemRow}>
+                        <Text style={styles.itemDesc} numberOfLines={1}>{it.description}</Text>
+                        <Text style={styles.itemMeta}>{it.quantity} x ${Number(it.unitPrice).toFixed(2)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
                 {q.message && <Text style={styles.quoteNote}>{q.message}</Text>}
                 {isCustomer && j.status === "open" && q.status === "pending" && !hasSelectedQuote && (
                   <TouchableOpacity
@@ -477,4 +584,19 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: 14, color: Colors.textSecondary, fontFamily: "Inter_500Medium" },
   paymentRow: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: Colors.successLight, padding: 12, borderRadius: 12 },
   paymentText: { fontSize: 13, color: Colors.success, fontFamily: "Inter_500Medium", flex: 1 },
+  lineItemRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  lineItemDesc: { flex: 1, paddingHorizontal: 10, paddingVertical: 10 },
+  lineItemQty: { width: 50, paddingHorizontal: 6, paddingVertical: 10, textAlign: "center" },
+  lineItemPrice: { width: 70, paddingHorizontal: 6, paddingVertical: 10, textAlign: "center" },
+  addItemBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingVertical: 4 },
+  addItemText: { color: Colors.primary, fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  totalRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: Colors.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  totalLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  totalValue: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.primary },
+  itemsBox: { backgroundColor: Colors.background, borderRadius: 10, padding: 10, gap: 4 },
+  itemRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  itemDesc: { fontSize: 12, color: Colors.text, fontFamily: "Inter_400Regular", flex: 1 },
+  itemMeta: { fontSize: 12, color: Colors.textSecondary, fontFamily: "Inter_400Regular" },
+  quoteAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: Colors.border },
+  quoteAvatarPlaceholder: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center" },
 });

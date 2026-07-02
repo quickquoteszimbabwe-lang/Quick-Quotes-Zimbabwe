@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuoteItem } from "./quoteItem";
 
 export interface CreateQuoteRequest {
   jobId: number;
@@ -12,4 +13,5 @@ export interface CreateQuoteRequest {
   timeline: string;
   /** @nullable */
   message?: string | null;
+  items?: QuoteItem[];
 }

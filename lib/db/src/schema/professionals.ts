@@ -11,6 +11,7 @@ export const professionalsTable = pgTable("professionals", {
   completedJobs: integer("completed_jobs").notNull().default(0),
   bio: text("bio"),
   location: text("location"),
+  experience: text("experience"),
 });
 
 export const insertProfessionalSchema = createInsertSchema(professionalsTable).omit({ id: true });

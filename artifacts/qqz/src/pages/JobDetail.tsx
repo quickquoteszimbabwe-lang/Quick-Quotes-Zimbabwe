@@ -11,9 +11,17 @@ import {
   getGetJobQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { MapPin, Clock, ChevronLeft, Star, CheckCircle, AlertCircle, DollarSign } from "lucide-react";
+import { MapPin, Clock, ChevronLeft, Star, CheckCircle, AlertCircle, DollarSign, Plus, Trash2, User as UserIcon } from "lucide-react";
 import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+interface QuoteLineItem {
+  description: string;
+  quantity: string;
+  unitPrice: string;
+}
+
+const emptyItem = (): QuoteLineItem => ({ description: "", quantity: "1", unitPrice: "" });
 
 export default function JobDetail() {
   const params = useParams<{ id: string }>();
@@ -23,7 +31,7 @@ export default function JobDetail() {
   const queryClient = useQueryClient();
   const { data: job, isLoading, error } = useGetJob(jobId);
 
-  const [quotePrice, setQuotePrice] = useState("");
+  const [quoteItems, setQuoteItems] = useState<QuoteLineItem[]>([emptyItem()]);
   const [quoteTimeline, setQuoteTimeline] = useState("");
   const [quoteMessage, setQuoteMessage] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"ecocash" | "bank_transfer" | "paynow">("ecocash");
@@ -71,11 +79,40 @@ export default function JobDetail() {
     completeJob.mutate({ id: jobId });
   }
 
+  const quoteTotal = quoteItems.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    return sum + qty * price;
+  }, 0);
+
+  function updateQuoteItem(index: number, field: keyof QuoteLineItem, value: string) {
+    setQuoteItems(prev => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+  }
+
+  function addQuoteItem() {
+    setQuoteItems(prev => [...prev, emptyItem()]);
+  }
+
+  function removeQuoteItem(index: number) {
+    setQuoteItems(prev => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  }
+
   function handleSubmitQuote(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
+    const items = quoteItems
+      .filter(item => item.description.trim() !== "")
+      .map(item => ({
+        description: item.description,
+        quantity: parseFloat(item.quantity) || 0,
+        unitPrice: parseFloat(item.unitPrice) || 0,
+      }));
+    if (items.length === 0) {
+      setFormError("Add at least one line item");
+      return;
+    }
     createQuote.mutate({
-      data: { jobId, price: parseFloat(quotePrice), timeline: quoteTimeline, message: quoteMessage || undefined }
+      data: { jobId, price: quoteTotal, timeline: quoteTimeline, message: quoteMessage || undefined, items }
     });
   }
 
@@ -127,30 +164,68 @@ export default function JobDetail() {
               return (
                 <div key={q.id} className={cn("bg-card rounded-xl border p-4", isSelected ? "border-secondary" : "border-border")}>
                   <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground text-sm">{q.professionalName || "Professional"}</span>
-                        {q.professionalVerified && (
-                          <span className="text-xs bg-secondary/10 text-secondary px-1.5 py-0.5 rounded-full">Verified</span>
-                        )}
-                        {isSelected && (
-                          <span className="text-xs bg-secondary text-white px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                            <CheckCircle size={10} /> Selected
-                          </span>
-                        )}
-                      </div>
-                      {q.professionalRating && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Star size={12} className="text-accent fill-accent" />
-                          <span className="text-xs text-muted-foreground">{Number(q.professionalRating).toFixed(1)} · {q.professionalCompletedJobs} jobs</span>
+                    <div className="flex items-center gap-2.5">
+                      {q.professionalPhotoUrl ? (
+                        <img src={q.professionalPhotoUrl} alt={q.professionalName || "Professional"} className="w-10 h-10 rounded-full object-cover border border-border shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <UserIcon size={18} className="text-primary" />
                         </div>
                       )}
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground text-sm">{q.professionalName || "Professional"}</span>
+                          {q.professionalVerified && (
+                            <span className="text-xs bg-secondary/10 text-secondary px-1.5 py-0.5 rounded-full">Verified</span>
+                          )}
+                          {isSelected && (
+                            <span className="text-xs bg-secondary text-white px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                              <CheckCircle size={10} /> Selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          {q.professionalRating && (
+                            <div className="flex items-center gap-1">
+                              <Star size={12} className="text-accent fill-accent" />
+                              <span className="text-xs text-muted-foreground">{Number(q.professionalRating).toFixed(1)} · {q.professionalCompletedJobs} jobs</span>
+                            </div>
+                          )}
+                          {q.professionalExperience && (
+                            <span className="text-xs text-muted-foreground">· {q.professionalExperience} exp.</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="font-bold text-foreground">{formatCurrency(Number(q.price))}</div>
                       <div className="text-xs text-muted-foreground">{q.timeline}</div>
                     </div>
                   </div>
+                  {q.items && q.items.length > 0 && (
+                    <div className="mt-2 bg-muted/50 rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-muted-foreground border-b border-border/60">
+                            <th className="text-left font-medium px-2 py-1.5">Description</th>
+                            <th className="text-right font-medium px-2 py-1.5">Qty</th>
+                            <th className="text-right font-medium px-2 py-1.5">Unit Price</th>
+                            <th className="text-right font-medium px-2 py-1.5">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {q.items.map((item: any, idx: number) => (
+                            <tr key={idx} className="border-b border-border/40 last:border-0">
+                              <td className="px-2 py-1.5 text-foreground">{item.description}</td>
+                              <td className="px-2 py-1.5 text-right text-muted-foreground">{item.quantity}</td>
+                              <td className="px-2 py-1.5 text-right text-muted-foreground">{formatCurrency(Number(item.unitPrice))}</td>
+                              <td className="px-2 py-1.5 text-right text-foreground font-medium">{formatCurrency(Number(item.quantity) * Number(item.unitPrice))}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                   {q.message && <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-2 rounded-lg">{q.message}</p>}
                   {isCustomer && job.status === "open" && (
                     <button
@@ -296,19 +371,69 @@ export default function JobDetail() {
                   <AlertCircle size={14} /> {formError}
                 </div>
               )}
+
               <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">Price (USD) *</label>
-                <input
-                  type="number"
-                  value={quotePrice}
-                  onChange={e => setQuotePrice(e.target.value)}
-                  placeholder="500"
-                  required
-                  min="0"
-                  step="0.01"
-                  className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+                <label className="text-sm font-medium text-foreground">Quotation Items *</label>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-[1fr_56px_84px_28px] gap-1 bg-muted/60 px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
+                    <span>Description</span>
+                    <span className="text-right">Qty</span>
+                    <span className="text-right">Unit Price</span>
+                    <span></span>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {quoteItems.map((item, idx) => (
+                      <div key={idx} className="grid grid-cols-[1fr_56px_84px_28px] gap-1 px-2 py-1.5 items-center">
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={e => updateQuoteItem(idx, "description", e.target.value)}
+                          placeholder="e.g. Cement (5 bags)"
+                          className="w-full border-none bg-transparent text-sm focus:outline-none px-1 py-1"
+                        />
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={e => updateQuoteItem(idx, "quantity", e.target.value)}
+                          min="0"
+                          step="1"
+                          className="w-full border border-border rounded px-1 py-1 text-sm text-right bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        />
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={e => updateQuoteItem(idx, "unitPrice", e.target.value)}
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="w-full border border-border rounded px-1 py-1 text-sm text-right bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeQuoteItem(idx)}
+                          disabled={quoteItems.length === 1}
+                          className="text-muted-foreground hover:text-destructive disabled:opacity-30 flex justify-center"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addQuoteItem}
+                  className="flex items-center gap-1 text-xs font-medium text-primary mt-1"
+                >
+                  <Plus size={13} /> Add line item
+                </button>
               </div>
+
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2.5">
+                <span className="text-sm font-semibold text-foreground">Total</span>
+                <span className="text-lg font-bold text-primary">{formatCurrency(quoteTotal)}</span>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-sm font-medium text-foreground">Timeline *</label>
                 <input
@@ -332,7 +457,7 @@ export default function JobDetail() {
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowQuoteForm(false)} className="flex-1 border border-border py-2 rounded-lg text-sm">Cancel</button>
-                <button type="submit" disabled={createQuote.isPending} className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-semibold">
+                <button type="submit" disabled={createQuote.isPending || quoteTotal <= 0} className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-semibold disabled:opacity-50">
                   {createQuote.isPending ? "Submitting..." : "Submit Quote"}
                 </button>
               </div>

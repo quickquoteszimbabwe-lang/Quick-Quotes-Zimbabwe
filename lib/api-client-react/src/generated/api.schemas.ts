@@ -48,6 +48,10 @@ export interface Professional {
   bio?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  experience?: string | null;
+  /** @nullable */
+  photoUrl?: string | null;
 }
 
 export interface UserProfile {
@@ -101,6 +105,8 @@ export interface CreateProfessionalRequest {
   bio?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  experience?: string | null;
 }
 
 export interface UpdateProfessionalRequest {
@@ -109,6 +115,8 @@ export interface UpdateProfessionalRequest {
   bio?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  experience?: string | null;
 }
 
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
@@ -137,6 +145,12 @@ export interface Job {
   customerName?: string | null;
 }
 
+export interface QuoteItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface QuoteDetail {
   id: number;
   jobId: number;
@@ -145,6 +159,7 @@ export interface QuoteDetail {
   timeline: string;
   /** @nullable */
   message?: string | null;
+  items?: QuoteItem[];
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;
@@ -154,6 +169,10 @@ export interface QuoteDetail {
   professionalVerified?: boolean | null;
   /** @nullable */
   professionalCompletedJobs?: number | null;
+  /** @nullable */
+  professionalPhotoUrl?: string | null;
+  /** @nullable */
+  professionalExperience?: string | null;
 }
 
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
@@ -243,11 +262,16 @@ export interface Quote {
   timeline: string;
   /** @nullable */
   message?: string | null;
+  items?: QuoteItem[];
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;
   /** @nullable */
   professionalRating?: number | null;
+  /** @nullable */
+  professionalPhotoUrl?: string | null;
+  /** @nullable */
+  professionalExperience?: string | null;
 }
 
 export interface CreateQuoteRequest {
@@ -256,6 +280,7 @@ export interface CreateQuoteRequest {
   timeline: string;
   /** @nullable */
   message?: string | null;
+  items?: QuoteItem[];
 }
 
 export type CreatePaymentRequestMethod =

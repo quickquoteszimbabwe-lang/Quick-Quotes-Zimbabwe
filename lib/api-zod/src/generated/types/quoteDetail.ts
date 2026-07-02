@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuoteItem } from "./quoteItem";
 
 export interface QuoteDetail {
   id: number;
@@ -14,6 +15,7 @@ export interface QuoteDetail {
   timeline: string;
   /** @nullable */
   message?: string | null;
+  items?: QuoteItem[];
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;
@@ -23,4 +25,8 @@ export interface QuoteDetail {
   professionalVerified?: boolean | null;
   /** @nullable */
   professionalCompletedJobs?: number | null;
+  /** @nullable */
+  professionalPhotoUrl?: string | null;
+  /** @nullable */
+  professionalExperience?: string | null;
 }

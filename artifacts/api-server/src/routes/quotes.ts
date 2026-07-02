@@ -4,8 +4,14 @@ import { quotesTable, professionalsTable, usersTable, jobsTable } from "@workspa
 import { eq, and } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateQuoteBody } from "@workspace/api-zod";
+import { getFacePhotoForUser } from "../lib/photo";
 
 const router: IRouter = Router();
+
+function computeTotal(items: { quantity: number; unitPrice: number }[] | undefined): number | null {
+  if (!items || items.length === 0) return null;
+  return items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice), 0);
+}
 
 router.post("/", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
@@ -33,15 +39,20 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const computedTotal = computeTotal(parsed.data.items);
+  const price = computedTotal !== null ? computedTotal : parsed.data.price;
+
   const [quote] = await db.insert(quotesTable).values({
     jobId: parsed.data.jobId,
     professionalId: prof.id,
-    price: String(parsed.data.price),
+    price: String(price),
     timeline: parsed.data.timeline,
     message: parsed.data.message ?? null,
+    items: parsed.data.items ?? [],
   }).returning();
 
   const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
+  const photoUrl = await getFacePhotoForUser(userId);
 
   res.status(201).json({
     id: quote.id,
@@ -50,9 +61,12 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     price: Number(quote.price),
     timeline: quote.timeline,
     message: quote.message,
+    items: quote.items,
     createdAt: quote.createdAt.toISOString(),
     professionalName: user?.name ?? null,
     professionalRating: prof.rating ? Number(prof.rating) : null,
+    professionalPhotoUrl: photoUrl,
+    professionalExperience: prof.experience ?? null,
   });
 });
 
@@ -72,6 +86,7 @@ router.get("/my", requireAuth, async (req: AuthRequest, res) => {
   const jobMap = new Map(jobs.map(j => [j.id, j.description]));
 
   const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
+  const photoUrl = await getFacePhotoForUser(userId);
 
   res.json(quotes.map(q => ({
     id: q.id,
@@ -80,9 +95,12 @@ router.get("/my", requireAuth, async (req: AuthRequest, res) => {
     price: Number(q.price),
     timeline: q.timeline,
     message: q.message,
+    items: q.items,
     createdAt: q.createdAt.toISOString(),
     professionalName: user?.name ?? null,
     professionalRating: prof.rating ? Number(prof.rating) : null,
+    professionalPhotoUrl: photoUrl,
+    professionalExperience: prof.experience ?? null,
   })));
 });
 

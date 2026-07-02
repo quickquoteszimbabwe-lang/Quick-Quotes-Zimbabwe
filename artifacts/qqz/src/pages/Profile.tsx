@@ -25,6 +25,7 @@ export default function Profile() {
   const [phone, setPhone] = useState(user?.phone || "");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
+  const [experience, setExperience] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
@@ -58,6 +59,7 @@ export default function Profile() {
       setSelectedServices(profile.professional.services || []);
       setBio(profile.professional.bio || "");
       setLocation(profile.professional.location || "");
+      setExperience((profile.professional as any).experience || "");
     }
     setEditingProfessional(true);
   }
@@ -133,6 +135,25 @@ export default function Profile() {
           {profile?.professional ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
+                {(profile.professional as any).photoUrl ? (
+                  <img
+                    src={(profile.professional as any).photoUrl}
+                    alt={profile.name}
+                    className="w-14 h-14 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={24} className="text-primary" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold text-foreground">{profile.name}</p>
+                  {(profile.professional as any).experience && (
+                    <p className="text-xs text-muted-foreground">{(profile.professional as any).experience} experience</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
                 {profile.professional.verified ? (
                   <span className="flex items-center gap-1 text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">
                     <CheckCircle size={12} /> Verified
@@ -171,11 +192,11 @@ export default function Profile() {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                const data = { services: selectedServices, bio: bio || undefined, location: location || undefined };
+                const data = { services: selectedServices, bio: bio || undefined, location: location || undefined, experience: experience || undefined };
                 if (profile?.professional) {
                   updateProfProfile.mutate({ data });
                 } else {
-                  createProfProfile.mutate({ data: { services: selectedServices, bio: bio || undefined, location: location || undefined } });
+                  createProfProfile.mutate({ data });
                 }
               }}
               className="space-y-3 border-t border-border pt-4 mt-4"
@@ -196,6 +217,10 @@ export default function Profile() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground">Years of Experience</label>
+                <input value={experience} onChange={e => setExperience(e.target.value)} placeholder="e.g. 5 years" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-foreground">Bio</label>
