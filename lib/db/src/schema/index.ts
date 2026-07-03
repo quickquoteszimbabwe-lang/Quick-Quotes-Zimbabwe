@@ -6,3 +6,7 @@ export * from "./payments";
 export * from "./reviews";
 export * from "./phone-otps";
 export * from "./verification-documents";
+export * from "./categories";
+export * from "./subcategories";
+export * from "./services";
+export * from "./job-photos";

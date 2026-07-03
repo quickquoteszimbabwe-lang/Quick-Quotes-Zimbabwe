@@ -7,43 +7,42 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { useCreateJob } from "@workspace/api-client-react";
+import * as ImagePicker from "expo-image-picker";
+import { useCreateJob, useGetCategoryTree } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetJobsQueryKey } from "@workspace/api-client-react";
 import Colors from "@/constants/colors";
 
-const CATEGORIES = [
-  "Agriculture & Farming",
-  "Borehole Drilling",
-  "Building & Construction",
-  "Cleaning & Sanitation",
-  "Electrical",
-  "Landscaping",
-  "Logistics & Transport",
-  "Painting & Decorating",
-  "Plumbing",
-  "Property & Real Estate",
-  "Security",
-  "Other",
-];
-
 const TIMELINES = ["ASAP", "Within a week", "Within a month", "Flexible"];
+const MAX_PHOTOS = 5;
 
 export default function CreateJobScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
+  const { data: categoryTree } = useGetCategoryTree();
+
   const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [service, setService] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [timeline, setTimeline] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState("");
+
+  const selectedCategory = categoryTree?.find((c) => c.name === category);
+  const hasSubcategories = (selectedCategory?.subcategories?.length ?? 0) > 0;
+  const selectedSubcategory = selectedCategory?.subcategories?.find((s) => s.name === subcategory);
+  const availableServices = hasSubcategories
+    ? (selectedSubcategory?.services ?? [])
+    : (selectedCategory?.services ?? []);
 
   const { mutate: createJob, isPending } = useCreateJob({
     mutation: {
@@ -57,9 +56,28 @@ export default function CreateJobScreen() {
     },
   });
 
+  async function pickPhotos() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      base64: true,
+      quality: 0.7,
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_PHOTOS - photos.length,
+    });
+    if (result.canceled) return;
+    const dataUrls = result.assets
+      .filter((a) => a.base64)
+      .map((a) => `data:${a.mimeType || "image/jpeg"};base64,${a.base64}`);
+    setPhotos((prev) => [...prev, ...dataUrls].slice(0, MAX_PHOTOS));
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  }
+
   function handleSubmit() {
     if (!category) { setError("Please select a category"); return; }
-    if (!service.trim()) { setError("Please describe the service you need"); return; }
+    if (!service.trim()) { setError("Please select a service"); return; }
     if (!description.trim()) { setError("Please provide a job description"); return; }
     if (!location.trim()) { setError("Please enter a location"); return; }
     setError("");
@@ -70,6 +88,7 @@ export default function CreateJobScreen() {
         description: description.trim(),
         location: location.trim(),
         timeline: timeline || null,
+        photos: photos.length > 0 ? photos : undefined,
       },
     });
   }
@@ -86,26 +105,50 @@ export default function CreateJobScreen() {
 
         <Text style={styles.sectionHead}>Service Category *</Text>
         <View style={styles.catGrid}>
-          {CATEGORIES.map((c) => (
+          {categoryTree?.map((c) => (
             <TouchableOpacity
-              key={c}
-              style={[styles.catChip, category === c && styles.catChipActive]}
-              onPress={() => setCategory(c)}
+              key={c.id}
+              style={[styles.catChip, category === c.name && styles.catChipActive]}
+              onPress={() => { setCategory(c.name); setSubcategory(""); setService(""); }}
             >
-              <Text style={[styles.catText, category === c && styles.catTextActive]}>{c}</Text>
+              <Text style={[styles.catText, category === c.name && styles.catTextActive]}>{c.name}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionHead}>What service do you need? *</Text>
-        <TextInput
-          style={styles.input}
-          value={service}
-          onChangeText={setService}
-          placeholder="e.g. Fix leaking pipe in kitchen"
-          placeholderTextColor={Colors.textTertiary}
-          maxLength={100}
-        />
+        {!!category && hasSubcategories && (
+          <>
+            <Text style={styles.sectionHead}>Subcategory *</Text>
+            <View style={styles.catGrid}>
+              {selectedCategory?.subcategories?.map((s) => (
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.catChip, subcategory === s.name && styles.catChipActive]}
+                  onPress={() => { setSubcategory(s.name); setService(""); }}
+                >
+                  <Text style={[styles.catText, subcategory === s.name && styles.catTextActive]}>{s.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        {!!category && (!hasSubcategories || !!subcategory) && (
+          <>
+            <Text style={styles.sectionHead}>Service *</Text>
+            <View style={styles.catGrid}>
+              {availableServices.map((s) => (
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.catChip, service === s.name && styles.catChipActive]}
+                  onPress={() => setService(s.name)}
+                >
+                  <Text style={[styles.catText, service === s.name && styles.catTextActive]}>{s.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
         <Text style={styles.sectionHead}>Description</Text>
         <TextInput
@@ -119,6 +162,23 @@ export default function CreateJobScreen() {
           textAlignVertical="top"
           maxLength={1000}
         />
+
+        <Text style={styles.sectionHead}>Photos (optional)</Text>
+        <View style={styles.photoRow}>
+          {photos.map((photo, i) => (
+            <View key={i} style={styles.photoThumbWrap}>
+              <Image source={{ uri: photo }} style={styles.photoThumb} />
+              <TouchableOpacity style={styles.photoRemoveBtn} onPress={() => removePhoto(i)}>
+                <Feather name="x" size={12} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+          ))}
+          {photos.length < MAX_PHOTOS && (
+            <TouchableOpacity style={styles.photoAddBtn} onPress={pickPhotos}>
+              <Feather name="image" size={20} color={Colors.textTertiary} />
+            </TouchableOpacity>
+          )}
+        </View>
 
         <Text style={styles.sectionHead}>Location</Text>
         <TextInput
@@ -174,6 +234,11 @@ const styles = StyleSheet.create({
   catTextActive: { color: Colors.white },
   input: { backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.text },
   textarea: { minHeight: 100 },
+  photoRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  photoThumbWrap: { width: 64, height: 64, position: "relative" },
+  photoThumb: { width: 64, height: 64, borderRadius: 10, backgroundColor: Colors.white },
+  photoRemoveBtn: { position: "absolute", top: -6, right: -6, backgroundColor: Colors.danger, borderRadius: 999, padding: 3 },
+  photoAddBtn: { width: 64, height: 64, borderRadius: 10, borderWidth: 1, borderStyle: "dashed", borderColor: Colors.border, alignItems: "center", justifyContent: "center" },
   timelineRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   timelineChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border },
   timelineChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },

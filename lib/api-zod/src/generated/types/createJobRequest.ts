@@ -13,4 +13,5 @@ export interface CreateJobRequest {
   location: string;
   /** @nullable */
   timeline?: string | null;
+  photos?: string[];
 }

@@ -4,11 +4,11 @@ import { jobsTable, usersTable, quotesTable, professionalsTable, paymentsTable, 
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateJobBody, UpdateJobBody, SelectQuoteBody } from "@workspace/api-zod";
-import { getFacePhotoMap } from "../lib/photo";
+import { getFacePhotoMap, insertJobPhotos, getJobPhotos } from "../lib/photo";
 
 const router: IRouter = Router();
 
-function formatJob(job: typeof jobsTable.$inferSelect, customerName?: string | null) {
+function formatJob(job: typeof jobsTable.$inferSelect, customerName?: string | null, photos?: string[]) {
   return {
     id: job.id,
     customerId: job.customerId,
@@ -21,6 +21,7 @@ function formatJob(job: typeof jobsTable.$inferSelect, customerName?: string | n
     selectedProfessionalId: job.selectedProfessionalId,
     createdAt: job.createdAt.toISOString(),
     customerName: customerName ?? null,
+    photos: photos ?? [],
   };
 }
 
@@ -74,8 +75,13 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     status: "open",
   }).returning();
 
+  if (parsed.data.photos && parsed.data.photos.length > 0) {
+    await insertJobPhotos(job.id, parsed.data.photos);
+  }
+  const photos = await getJobPhotos(job.id);
+
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.status(201).json(formatJob(job, customer?.name));
+  res.status(201).json(formatJob(job, customer?.name, photos));
 });
 
 router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -110,6 +116,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.jobId, jobId));
   const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.jobId, jobId));
   const reviewCustomer = review ? await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, review.customerId)) : [];
+  const photos = await getJobPhotos(jobId);
 
   res.json({
     id: job.id,
@@ -123,6 +130,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
     selectedProfessionalId: job.selectedProfessionalId,
     createdAt: job.createdAt.toISOString(),
     customerName: customer?.name ?? null,
+    photos,
     quotes: quotes.map(q => {
       const prof = profMap.get(q.professionalId);
       return {

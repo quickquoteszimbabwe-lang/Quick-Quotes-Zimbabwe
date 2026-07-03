@@ -22,4 +22,5 @@ export interface Job {
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  photos?: string[];
 }
