@@ -196,6 +196,7 @@ export const GetJobsResponseItem = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 export const GetJobsResponse = zod.array(GetJobsResponseItem);
 
@@ -208,6 +209,7 @@ export const CreateJobBody = zod.object({
   description: zod.string(),
   location: zod.string(),
   timeline: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 
 /**
@@ -229,6 +231,7 @@ export const GetJobResponse = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
   quotes: zod.array(
     zod.object({
       id: zod.number(),
@@ -304,6 +307,7 @@ export const UpdateJobResponse = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 
 /**
@@ -329,6 +333,7 @@ export const SelectQuoteResponse = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 
 /**
@@ -350,6 +355,7 @@ export const CompleteJobResponse = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 
 /**
@@ -533,6 +539,7 @@ export const AdminGetJobsResponseItem = zod.object({
   selectedProfessionalId: zod.number().nullish(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  photos: zod.array(zod.string()).optional(),
 });
 export const AdminGetJobsResponse = zod.array(AdminGetJobsResponseItem);
 
@@ -549,3 +556,294 @@ export const AdminGetPaymentsResponseItem = zod.object({
   jobDescription: zod.string().nullish(),
 });
 export const AdminGetPaymentsResponse = zod.array(AdminGetPaymentsResponseItem);
+
+/**
+ * @summary List active categories
+ */
+export const GetCategoriesQueryParams = zod.object({
+  includeInactive: zod.coerce.string().optional(),
+});
+
+export const GetCategoriesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  icon: zod.string(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+export const GetCategoriesResponse = zod.array(GetCategoriesResponseItem);
+
+/**
+ * @summary Get full category/subcategory/service tree
+ */
+export const GetCategoryTreeQueryParams = zod.object({
+  includeInactive: zod.coerce.string().optional(),
+});
+
+export const GetCategoryTreeResponseItem = zod
+  .object({
+    id: zod.number(),
+    name: zod.string(),
+    icon: zod.string(),
+    active: zod.boolean(),
+    featured: zod.boolean(),
+    sortOrder: zod.number(),
+  })
+  .and(
+    zod.object({
+      subcategories: zod.array(
+        zod
+          .object({
+            id: zod.number(),
+            categoryId: zod.number(),
+            name: zod.string(),
+            active: zod.boolean(),
+            sortOrder: zod.number(),
+          })
+          .and(
+            zod.object({
+              services: zod.array(
+                zod.object({
+                  id: zod.number(),
+                  name: zod.string(),
+                  description: zod.string().nullish(),
+                  icon: zod.string(),
+                  categoryId: zod.number(),
+                  subcategoryId: zod.number().nullish(),
+                  active: zod.boolean(),
+                  featured: zod.boolean(),
+                  sortOrder: zod.number(),
+                }),
+              ),
+            }),
+          ),
+      ),
+      services: zod.array(
+        zod.object({
+          id: zod.number(),
+          name: zod.string(),
+          description: zod.string().nullish(),
+          icon: zod.string(),
+          categoryId: zod.number(),
+          subcategoryId: zod.number().nullish(),
+          active: zod.boolean(),
+          featured: zod.boolean(),
+          sortOrder: zod.number(),
+        }),
+      ),
+    }),
+  );
+export const GetCategoryTreeResponse = zod.array(GetCategoryTreeResponseItem);
+
+/**
+ * @summary Search/list services
+ */
+export const GetServicesQueryParams = zod.object({
+  search: zod.coerce.string().optional(),
+  categoryId: zod.coerce.string().optional(),
+  subcategoryId: zod.coerce.string().optional(),
+  featured: zod.coerce.string().optional(),
+});
+
+export const GetServicesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  icon: zod.string(),
+  categoryId: zod.number(),
+  subcategoryId: zod.number().nullish(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+export const GetServicesResponse = zod.array(GetServicesResponseItem);
+
+/**
+ * @summary Admin - list all categories
+ */
+export const AdminGetCategoriesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  icon: zod.string(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+export const AdminGetCategoriesResponse = zod.array(
+  AdminGetCategoriesResponseItem,
+);
+
+/**
+ * @summary Admin - create category
+ */
+export const AdminCreateCategoryBody = zod.object({
+  name: zod.string(),
+  icon: zod.string().optional(),
+  active: zod.boolean().optional(),
+  featured: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+/**
+ * @summary Admin - update category
+ */
+export const AdminUpdateCategoryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdateCategoryBody = zod.object({
+  name: zod.string().optional(),
+  icon: zod.string().optional(),
+  active: zod.boolean().optional(),
+  featured: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+export const AdminUpdateCategoryResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  icon: zod.string(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+
+/**
+ * @summary Admin - delete category
+ */
+export const AdminDeleteCategoryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminDeleteCategoryResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Admin - list all subcategories
+ */
+export const AdminGetSubcategoriesResponseItem = zod.object({
+  id: zod.number(),
+  categoryId: zod.number(),
+  name: zod.string(),
+  active: zod.boolean(),
+  sortOrder: zod.number(),
+});
+export const AdminGetSubcategoriesResponse = zod.array(
+  AdminGetSubcategoriesResponseItem,
+);
+
+/**
+ * @summary Admin - create subcategory
+ */
+export const AdminCreateSubcategoryBody = zod.object({
+  categoryId: zod.number(),
+  name: zod.string(),
+  active: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+/**
+ * @summary Admin - update subcategory
+ */
+export const AdminUpdateSubcategoryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdateSubcategoryBody = zod.object({
+  categoryId: zod.number().optional(),
+  name: zod.string().optional(),
+  active: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+export const AdminUpdateSubcategoryResponse = zod.object({
+  id: zod.number(),
+  categoryId: zod.number(),
+  name: zod.string(),
+  active: zod.boolean(),
+  sortOrder: zod.number(),
+});
+
+/**
+ * @summary Admin - delete subcategory
+ */
+export const AdminDeleteSubcategoryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminDeleteSubcategoryResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Admin - list all services
+ */
+export const AdminGetServicesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  icon: zod.string(),
+  categoryId: zod.number(),
+  subcategoryId: zod.number().nullish(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+export const AdminGetServicesResponse = zod.array(AdminGetServicesResponseItem);
+
+/**
+ * @summary Admin - create service
+ */
+export const AdminCreateServiceBody = zod.object({
+  name: zod.string(),
+  description: zod.string().nullish(),
+  icon: zod.string().optional(),
+  categoryId: zod.number(),
+  subcategoryId: zod.number().nullish(),
+  active: zod.boolean().optional(),
+  featured: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+/**
+ * @summary Admin - update service
+ */
+export const AdminUpdateServiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdateServiceBody = zod.object({
+  name: zod.string().optional(),
+  description: zod.string().nullish(),
+  icon: zod.string().optional(),
+  categoryId: zod.number().optional(),
+  subcategoryId: zod.number().nullish(),
+  active: zod.boolean().optional(),
+  featured: zod.boolean().optional(),
+  sortOrder: zod.number().optional(),
+});
+
+export const AdminUpdateServiceResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  icon: zod.string(),
+  categoryId: zod.number(),
+  subcategoryId: zod.number().nullish(),
+  active: zod.boolean(),
+  featured: zod.boolean(),
+  sortOrder: zod.number(),
+});
+
+/**
+ * @summary Admin - delete service
+ */
+export const AdminDeleteServiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminDeleteServiceResponse = zod.object({
+  message: zod.string(),
+});

@@ -147,6 +147,15 @@ export default function JobDetail() {
           </span>
         </div>
         <p className="text-sm text-muted-foreground">{job.description}</p>
+        {job.photos && job.photos.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {job.photos.map((photo, i) => (
+              <a key={i} href={photo} target="_blank" rel="noreferrer">
+                <img src={photo} alt={`Job photo ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-border" />
+              </a>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><MapPin size={12} /> {job.location}</span>
           <span className="flex items-center gap-1"><Clock size={12} /> {formatDate(job.createdAt)}</span>

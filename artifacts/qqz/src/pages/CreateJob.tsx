@@ -1,18 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { useCreateJob } from "@workspace/api-client-react";
+import { useCreateJob, useGetCategoryTree } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetJobsQueryKey } from "@workspace/api-client-react";
-import { AlertCircle, ChevronLeft } from "lucide-react";
+import { AlertCircle, ChevronLeft, ImagePlus, X } from "lucide-react";
 
-const CATEGORIES: Record<string, string[]> = {
-  Construction: ["Building", "Plumbing", "Electrical", "Painting", "Tiling", "Other Construction"],
-  "Borehole Services": ["Drilling", "Deepening", "Pump Installation", "Other Borehole"],
-  Transport: ["Moving", "Truck Hire", "Delivery", "Other Transport"],
-  Cleaning: ["Home Cleaning", "Office Cleaning", "Post-Construction Cleaning", "Other Cleaning"],
-  Agriculture: ["Irrigation", "Farm Labor", "Other Agriculture"],
-  "Property Services": ["Property Inspection", "Supervision", "Diaspora Management", "Other Property"],
-};
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function CreateJob() {
   const [, navigate] = useLocation();
@@ -20,12 +20,24 @@ export default function CreateJob() {
   const params = new URLSearchParams(window.location.search);
   const initialCategory = params.get("category") || "";
 
+  const { data: categoryTree } = useGetCategoryTree();
+
   const [category, setCategory] = useState(initialCategory);
+  const [subcategory, setSubcategory] = useState("");
   const [service, setService] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [timeline, setTimeline] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedCategory = categoryTree?.find(c => c.name === category);
+  const hasSubcategories = (selectedCategory?.subcategories?.length ?? 0) > 0;
+  const selectedSubcategory = selectedCategory?.subcategories?.find(s => s.name === subcategory);
+  const availableServices = hasSubcategories
+    ? (selectedSubcategory?.services ?? [])
+    : (selectedCategory?.services ?? []);
 
   const createJob = useCreateJob({
     mutation: {
@@ -39,6 +51,20 @@ export default function CreateJob() {
     },
   });
 
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const remaining = Math.max(0, 5 - photos.length);
+    const toAdd = files.slice(0, remaining);
+    const dataUrls = await Promise.all(toAdd.map(fileToDataUrl));
+    setPhotos(prev => [...prev, ...dataUrls]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function removePhoto(index: number) {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -47,7 +73,7 @@ export default function CreateJob() {
       return;
     }
     createJob.mutate({
-      data: { category, service, description, location, timeline: timeline || undefined },
+      data: { category, service, description, location, timeline: timeline || undefined, photos: photos.length > 0 ? photos : undefined },
     });
   }
 
@@ -72,18 +98,35 @@ export default function CreateJob() {
           <label className="text-sm font-medium text-foreground">Category *</label>
           <select
             value={category}
-            onChange={e => { setCategory(e.target.value); setService(""); }}
+            onChange={e => { setCategory(e.target.value); setSubcategory(""); setService(""); }}
             required
             className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           >
             <option value="">Select category</option>
-            {Object.keys(CATEGORIES).map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+            {categoryTree?.map(cat => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
             ))}
           </select>
         </div>
 
-        {category && (
+        {category && hasSubcategories && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-foreground">Subcategory *</label>
+            <select
+              value={subcategory}
+              onChange={e => { setSubcategory(e.target.value); setService(""); }}
+              required
+              className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            >
+              <option value="">Select subcategory</option>
+              {selectedCategory?.subcategories?.map(sub => (
+                <option key={sub.id} value={sub.name}>{sub.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {category && (!hasSubcategories || subcategory) && (
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Service *</label>
             <select
@@ -93,8 +136,8 @@ export default function CreateJob() {
               className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
               <option value="">Select service</option>
-              {(CATEGORIES[category] || []).map(s => (
-                <option key={s} value={s}>{s}</option>
+              {availableServices.map(s => (
+                <option key={s.id} value={s.name}>{s.name}</option>
               ))}
             </select>
           </div>
@@ -110,6 +153,42 @@ export default function CreateJob() {
             rows={4}
             className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
           />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-foreground">Photos (optional)</label>
+          <div className="flex flex-wrap gap-2">
+            {photos.map((photo, i) => (
+              <div key={i} className="relative w-16 h-16">
+                <img src={photo} alt={`Upload ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-border" />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+            {photos.length < 5 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-16 h-16 flex items-center justify-center border border-dashed border-border rounded-lg text-muted-foreground hover:border-primary/50 hover:text-primary"
+              >
+                <ImagePlus size={20} />
+              </button>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+          <p className="text-xs text-muted-foreground">Add up to 5 photos to help professionals understand the job.</p>
         </div>
 
         <div className="space-y-1">

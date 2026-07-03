@@ -143,6 +143,7 @@ export interface Job {
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  photos?: string[];
 }
 
 export interface QuoteItem {
@@ -230,6 +231,7 @@ export interface JobDetail {
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  photos?: string[];
   quotes: QuoteDetail[];
   payment?: Payment;
   review?: Review;
@@ -242,6 +244,103 @@ export interface CreateJobRequest {
   location: string;
   /** @nullable */
   timeline?: string | null;
+  photos?: string[];
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  active: boolean;
+  featured: boolean;
+  sortOrder: number;
+}
+
+export interface Subcategory {
+  id: number;
+  categoryId: number;
+  name: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+export interface Service {
+  id: number;
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  icon: string;
+  categoryId: number;
+  /** @nullable */
+  subcategoryId?: number | null;
+  active: boolean;
+  featured: boolean;
+  sortOrder: number;
+}
+
+export type SubcategoryWithServices = Subcategory & {
+  services: Service[];
+};
+
+export type CategoryTreeNode = Category & {
+  subcategories: SubcategoryWithServices[];
+  services: Service[];
+};
+
+export interface CreateCategoryRequest {
+  name: string;
+  icon?: string;
+  active?: boolean;
+  featured?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  icon?: string;
+  active?: boolean;
+  featured?: boolean;
+  sortOrder?: number;
+}
+
+export interface CreateSubcategoryRequest {
+  categoryId: number;
+  name: string;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateSubcategoryRequest {
+  categoryId?: number;
+  name?: string;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+export interface CreateServiceRequest {
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  icon?: string;
+  categoryId: number;
+  /** @nullable */
+  subcategoryId?: number | null;
+  active?: boolean;
+  featured?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateServiceRequest {
+  name?: string;
+  /** @nullable */
+  description?: string | null;
+  icon?: string;
+  categoryId?: number;
+  /** @nullable */
+  subcategoryId?: number | null;
+  active?: boolean;
+  featured?: boolean;
+  sortOrder?: number;
 }
 
 export interface UpdateJobRequest {
@@ -324,4 +423,19 @@ export type GetJobsParams = {
   category?: string;
   limit?: number;
   offset?: number;
+};
+
+export type GetCategoriesParams = {
+  includeInactive?: string;
+};
+
+export type GetCategoryTreeParams = {
+  includeInactive?: string;
+};
+
+export type GetServicesParams = {
+  search?: string;
+  categoryId?: string;
+  subcategoryId?: string;
+  featured?: string;
 };

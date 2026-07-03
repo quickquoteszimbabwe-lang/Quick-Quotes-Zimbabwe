@@ -563,6 +563,300 @@ paths:
                 items:
                   $ref: "#/components/schemas/Payment"
 
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [services]
+      summary: List active categories
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /categories/tree:
+    get:
+      operationId: getCategoryTree
+      tags: [services]
+      summary: Get full category/subcategory/service tree
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Category tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryTreeNode"
+
+  /services:
+    get:
+      operationId: getServices
+      tags: [services]
+      summary: Search/list services
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: subcategoryId
+          in: query
+          schema:
+            type: string
+        - name: featured
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+
+  /admin/categories:
+    get:
+      operationId: adminGetCategories
+      tags: [admin]
+      summary: Admin - list all categories
+      responses:
+        "200":
+          description: All categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: adminCreateCategory
+      tags: [admin]
+      summary: Admin - create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /admin/categories/{id}:
+    patch:
+      operationId: adminUpdateCategory
+      tags: [admin]
+      summary: Admin - update category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCategoryRequest"
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: adminDeleteCategory
+      tags: [admin]
+      summary: Admin - delete category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /admin/subcategories:
+    get:
+      operationId: adminGetSubcategories
+      tags: [admin]
+      summary: Admin - list all subcategories
+      responses:
+        "200":
+          description: All subcategories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subcategory"
+    post:
+      operationId: adminCreateSubcategory
+      tags: [admin]
+      summary: Admin - create subcategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubcategoryRequest"
+      responses:
+        "201":
+          description: Created subcategory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subcategory"
+
+  /admin/subcategories/{id}:
+    patch:
+      operationId: adminUpdateSubcategory
+      tags: [admin]
+      summary: Admin - update subcategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubcategoryRequest"
+      responses:
+        "200":
+          description: Updated subcategory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subcategory"
+    delete:
+      operationId: adminDeleteSubcategory
+      tags: [admin]
+      summary: Admin - delete subcategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /admin/services:
+    get:
+      operationId: adminGetServices
+      tags: [admin]
+      summary: Admin - list all services
+      responses:
+        "200":
+          description: All services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+    post:
+      operationId: adminCreateService
+      tags: [admin]
+      summary: Admin - create service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceRequest"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /admin/services/{id}:
+    patch:
+      operationId: adminUpdateService
+      tags: [admin]
+      summary: Admin - update service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceRequest"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+    delete:
+      operationId: adminDeleteService
+      tags: [admin]
+      summary: Admin - delete service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -780,6 +1074,10 @@ components:
           type: string
         customerName:
           type: ["string", "null"]
+        photos:
+          type: array
+          items:
+            type: string
       required:
         - id
         - customerId
@@ -815,6 +1113,10 @@ components:
           type: string
         customerName:
           type: ["string", "null"]
+        photos:
+          type: array
+          items:
+            type: string
         quotes:
           type: array
           items:
@@ -847,11 +1149,217 @@ components:
           type: string
         timeline:
           type: ["string", "null"]
+        photos:
+          type: array
+          items:
+            type: string
       required:
         - category
         - service
         - description
         - location
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - id
+        - name
+        - icon
+        - active
+        - featured
+        - sortOrder
+
+    Subcategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        categoryId:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - id
+        - categoryId
+        - name
+        - active
+        - sortOrder
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        icon:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: ["integer", "null"]
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - id
+        - name
+        - icon
+        - categoryId
+        - active
+        - featured
+        - sortOrder
+
+    SubcategoryWithServices:
+      allOf:
+        - $ref: "#/components/schemas/Subcategory"
+        - type: object
+          properties:
+            services:
+              type: array
+              items:
+                $ref: "#/components/schemas/Service"
+          required:
+            - services
+
+    CategoryTreeNode:
+      allOf:
+        - $ref: "#/components/schemas/Category"
+        - type: object
+          properties:
+            subcategories:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubcategoryWithServices"
+            services:
+              type: array
+              items:
+                $ref: "#/components/schemas/Service"
+          required:
+            - subcategories
+            - services
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - name
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    CreateSubcategoryRequest:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - categoryId
+        - name
+
+    UpdateSubcategoryRequest:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    CreateServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        icon:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: ["integer", "null"]
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - name
+        - categoryId
+
+    UpdateServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        icon:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: ["integer", "null"]
+        active:
+          type: boolean
+        featured:
+          type: boolean
+        sortOrder:
+          type: integer
 
     UpdateJobRequest:
       type: object

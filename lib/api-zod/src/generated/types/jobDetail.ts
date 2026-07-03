@@ -24,6 +24,7 @@ export interface JobDetail {
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  photos?: string[];
   quotes: QuoteDetail[];
   payment?: Payment;
   review?: Review;
