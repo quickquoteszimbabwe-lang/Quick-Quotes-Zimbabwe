@@ -159,6 +159,17 @@ const DATA: CategorySeed[] = [
     services: ["Website development", "Mobile app development", "Graphic design", "Logo design", "Social media management", "Digital marketing", "SEO", "Computer repairs", "Network installation", "CCTV networking"],
   },
   {
+    name: "Photography & Media",
+    icon: "Camera",
+    featured: true,
+    subcategories: [
+      { name: "Photography", services: ["Wedding photography", "Portrait photography", "Corporate photography", "Product photography", "Real estate photography", "Event photography", "Drone photography", "Passport & ID photos"] },
+      { name: "Videography", services: ["Wedding videography", "Corporate video production", "Music videos", "Promotional videos", "Documentary filming", "Drone videography", "Event videography", "YouTube content creation"] },
+      { name: "Post-Production", services: ["Photo editing & retouching", "Video editing", "Color grading", "Motion graphics", "Animation", "Podcast production"] },
+      { name: "Live Streaming", services: ["Event live streaming", "Church live streaming", "Online conference setup", "Studio hire"] },
+    ],
+  },
+  {
     name: "Printing & Branding",
     icon: "Printer",
     services: ["Business cards", "Flyers", "Banners", "Vehicle branding", "T-shirt printing", "Packaging", "Labels", "Promotional materials"],
