@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Briefcase, CreditCard, User, Shield, FileText } from "lucide-react";
+import { Home, Briefcase, CreditCard, User, Shield, FileText, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -19,6 +19,7 @@ export function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { href: "/home", icon: Home, label: "Home" },
+    { href: "/services", icon: LayoutGrid, label: "Services" },
     { href: "/jobs", icon: Briefcase, label: "Jobs" },
     { href: "/payments", icon: CreditCard, label: "Payments" },
     { href: "/profile", icon: User, label: "Profile" },

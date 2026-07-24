@@ -1,63 +1,19 @@
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Droplets, Truck, Sparkles, Leaf, Home as HomeIcon, ChevronRight, Plus, Star } from "lucide-react";
-
-const categories = [
-  {
-    id: "Construction",
-    icon: Building2,
-    label: "Construction",
-    description: "Building, plumbing, electrical, painting, tiling",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
-    iconBg: "bg-blue-100",
-  },
-  {
-    id: "Borehole Services",
-    icon: Droplets,
-    label: "Borehole Services",
-    description: "Drilling, deepening, pump installation",
-    color: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    iconBg: "bg-cyan-100",
-  },
-  {
-    id: "Transport",
-    icon: Truck,
-    label: "Transport",
-    description: "Moving, truck hire, delivery",
-    color: "bg-orange-50 text-orange-700 border-orange-200",
-    iconBg: "bg-orange-100",
-  },
-  {
-    id: "Cleaning",
-    icon: Sparkles,
-    label: "Cleaning",
-    description: "Home, office, post-construction",
-    color: "bg-purple-50 text-purple-700 border-purple-200",
-    iconBg: "bg-purple-100",
-  },
-  {
-    id: "Agriculture",
-    icon: Leaf,
-    label: "Agriculture",
-    description: "Irrigation, farm labor",
-    color: "bg-green-50 text-green-700 border-green-200",
-    iconBg: "bg-green-100",
-  },
-  {
-    id: "Property Services",
-    icon: HomeIcon,
-    label: "Property Services",
-    description: "Inspection, supervision, diaspora management",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    iconBg: "bg-amber-100",
-  },
-];
+import { useGetCategoryTree } from "@workspace/api-client-react";
+import { ChevronRight, Plus, Star, Search } from "lucide-react";
+import { getCategoryIcon, getCategoryColor } from "@/lib/iconMap";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { user } = useAuth();
+  const { data: tree, isLoading } = useGetCategoryTree();
+
+  const featuredCategories = tree?.filter((c) => c.featured) ?? [];
 
   return (
     <div className="space-y-6">
+      {/* Hero card */}
       <div className="bg-primary rounded-2xl p-5 text-white">
         <p className="text-white/70 text-sm">Good day,</p>
         <h1 className="text-xl font-bold mt-0.5">{user?.name}</h1>
@@ -73,33 +29,73 @@ export default function Home() {
         )}
       </div>
 
+      {/* Quick search */}
+      <Link
+        href="/services"
+        className="flex items-center gap-3 w-full px-4 py-3 bg-card border border-border rounded-xl text-muted-foreground hover:border-primary/50 hover:bg-primary/5 transition-all text-sm"
+      >
+        <Search size={16} />
+        <span>Search services — plumbing, photography, cleaning…</span>
+      </Link>
+
+      {/* Featured categories */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-foreground text-lg">Service Categories</h2>
-          <Link href="/jobs" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
-            View jobs <ChevronRight size={16} />
+          <h2 className="font-bold text-foreground text-lg">Featured Categories</h2>
+          <Link href="/services" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
+            All {tree?.length ?? ""} <ChevronRight size={16} />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {categories.map(({ id, icon: Icon, label, description, color, iconBg }) => (
-            <Link
-              key={id}
-              href={user?.role === "customer" ? `/jobs/create?category=${encodeURIComponent(id)}` : `/jobs?category=${encodeURIComponent(id)}`}
-              className={`flex items-center gap-4 p-4 rounded-xl border ${color} hover:shadow-sm transition-all group`}
-            >
-              <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
-                <Icon size={22} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm">{label}</div>
-                <div className="text-xs opacity-70 mt-0.5 line-clamp-1">{description}</div>
-              </div>
-              <ChevronRight size={16} className="opacity-50 group-hover:opacity-100 flex-shrink-0" />
-            </Link>
-          ))}
-        </div>
+
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {featuredCategories.map((cat) => {
+              const Icon = getCategoryIcon(cat.icon);
+              const color = getCategoryColor(cat.sortOrder);
+              const totalServices = (cat.subcategories ?? []).reduce(
+                (sum, sub) => sum + ((sub as any).services?.length ?? 0),
+                0
+              ) + ((cat as any).services?.length ?? 0);
+              const href =
+                user?.role === "customer"
+                  ? `/jobs/create?category=${encodeURIComponent(cat.name)}`
+                  : `/jobs?category=${encodeURIComponent(cat.name)}`;
+              return (
+                <Link
+                  key={cat.id}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-4 p-4 rounded-xl border transition-all group hover:shadow-sm",
+                    color.bg,
+                    color.border
+                  )}
+                >
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105", color.iconBg)}>
+                    <Icon size={22} className={color.icon} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-foreground">{cat.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {totalServices} service{totalServices !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary flex-shrink-0 transition-colors" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
+      {/* How it works */}
       <div className="bg-card rounded-2xl border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
           <Star size={18} className="text-accent fill-accent" />

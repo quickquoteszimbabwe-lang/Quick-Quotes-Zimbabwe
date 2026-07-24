@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGetJobs } from "@workspace/api-client-react";
+import { useGetJobs, useGetCategories } from "@workspace/api-client-react";
 import { Plus, MapPin, Clock, ChevronRight, Briefcase } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["All", "Construction", "Borehole Services", "Transport", "Cleaning", "Agriculture", "Property Services"];
-
 export default function Jobs() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const { data: categories } = useGetCategories();
   const { data: jobs, isLoading, error } = useGetJobs({
     category: selectedCategory !== "All" ? selectedCategory : undefined,
   });
@@ -32,19 +32,31 @@ export default function Jobs() {
         )}
       </div>
 
+      {/* Dynamic category filter chips */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {CATEGORIES.map(cat => (
+        <button
+          onClick={() => setSelectedCategory("All")}
+          className={cn(
+            "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+            selectedCategory === "All"
+              ? "bg-primary text-white"
+              : "bg-card border border-border text-muted-foreground hover:border-primary/50"
+          )}
+        >
+          All
+        </button>
+        {categories?.map((cat) => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.name)}
             className={cn(
               "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              selectedCategory === cat
+              selectedCategory === cat.name
                 ? "bg-primary text-white"
                 : "bg-card border border-border text-muted-foreground hover:border-primary/50"
             )}
           >
-            {cat}
+            {cat.name}
           </button>
         ))}
       </div>
@@ -77,12 +89,12 @@ export default function Jobs() {
       )}
 
       <div className="space-y-3">
-        {jobs?.map(job => (
+        {jobs?.map((job) => (
           <Link key={job.id} href={`/jobs/${job.id}`}>
             <div className="bg-card rounded-xl border border-border p-4 hover:shadow-sm transition-all group">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                       {job.category}
                     </span>
