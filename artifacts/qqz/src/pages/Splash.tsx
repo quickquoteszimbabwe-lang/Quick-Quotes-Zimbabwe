@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Wrench, Truck, Droplets, Home, Leaf, Building } from "lucide-react";
+import { Wrench, Truck, Droplets, Home, Leaf, Building, Camera } from "lucide-react";
 
 const categories = [
   { icon: Building, label: "Construction" },
@@ -7,7 +7,7 @@ const categories = [
   { icon: Truck, label: "Transport" },
   { icon: Home, label: "Cleaning" },
   { icon: Leaf, label: "Agriculture" },
-  { icon: Wrench, label: "Property Services" },
+  { icon: Camera, label: "Photography & Media" },
 ];
 
 export default function Splash() {
