@@ -11,6 +11,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Home from "@/pages/Home";
 import Jobs from "@/pages/Jobs";
+import Services from "@/pages/Services";
 import CreateJob from "@/pages/CreateJob";
 import JobDetail from "@/pages/JobDetail";
 import MyQuotes from "@/pages/MyQuotes";
@@ -79,6 +80,9 @@ function AppRoutes() {
       </Route>
       <Route path="/home">
         <ProtectedRoute component={Home} />
+      </Route>
+      <Route path="/services">
+        <ProtectedRoute component={Services} />
       </Route>
       <Route path="/jobs/create">
         <ProtectedRoute component={CreateJob} roles={["customer"]} />
