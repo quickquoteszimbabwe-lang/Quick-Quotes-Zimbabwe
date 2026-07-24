@@ -118,15 +118,15 @@ export default function JobDetail() {
 
   function handleCreatePayment(e: React.FormEvent) {
     e.preventDefault();
-    if (!job.quotes) return;
-    const selectedQ = job.quotes.find((q: any) => q.professionalId === job.selectedProfessionalId);
+    if (!job) return;
+    const selectedQ = job.quotes?.find((q: any) => q.professionalId === job.selectedProfessionalId);
     const amount = selectedQ ? selectedQ.price : 0;
     createPayment.mutate({ data: { jobId, amount, method: paymentMethod } });
   }
 
   function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault();
-    if (!job.selectedProfessionalId) return;
+    if (!job || !job.selectedProfessionalId) return;
     createReview.mutate({ data: { jobId, professionalId: job.selectedProfessionalId, rating: reviewRating, comment: reviewComment || undefined } });
   }
 
@@ -358,7 +358,7 @@ export default function JobDetail() {
           <h2 className="font-bold text-foreground mb-2">Review</h2>
           <div className="flex items-center gap-2 mb-1">
             {[1,2,3,4,5].map(n => (
-              <Star key={n} size={16} className={n <= job.review.rating ? "text-accent fill-accent" : "text-muted-foreground"} />
+              <Star key={n} size={16} className={n <= (job.review?.rating ?? 0) ? "text-accent fill-accent" : "text-muted-foreground"} />
             ))}
             <span className="text-sm text-muted-foreground">by {job.review.customerName || "Customer"}</span>
           </div>
