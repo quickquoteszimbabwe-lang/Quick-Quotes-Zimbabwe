@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Briefcase, CreditCard, User, Shield, FileText, LayoutGrid } from "lucide-react";
+import { Home, FileText, CreditCard, User, Shield, Send, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatRole } from "@/lib/pricingModels";
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,13 +21,13 @@ export function Layout({ children }: LayoutProps) {
   const navItems = [
     { href: "/home", icon: Home, label: "Home" },
     { href: "/services", icon: LayoutGrid, label: "Services" },
-    { href: "/jobs", icon: Briefcase, label: "Jobs" },
+    { href: "/requests", icon: FileText, label: "Requests" },
     { href: "/payments", icon: CreditCard, label: "Payments" },
     { href: "/profile", icon: User, label: "Profile" },
   ];
 
   if (user?.role === "professional") {
-    navItems.splice(2, 0, { href: "/quotes", icon: FileText, label: "Quotes" });
+    navItems.splice(3, 0, { href: "/offers", icon: Send, label: "My Offers" });
   }
 
   if (user?.role === "admin") {
@@ -49,8 +50,8 @@ export function Layout({ children }: LayoutProps) {
             {user && (
               <>
                 <span className="text-sm hidden md:block text-white/80">{user.name}</span>
-                <span className="text-xs bg-secondary/20 border border-secondary/40 text-white px-2 py-0.5 rounded-full capitalize">
-                  {user.role}
+                <span className="text-xs bg-white/10 border border-white/20 text-white px-2 py-0.5 rounded-full capitalize">
+                  {formatRole(user.role)}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -69,7 +70,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {user && (
-        <nav className="bg-white border-t border-border sticky bottom-0 z-50 shadow-lg">
+        <nav className="bg-white dark:bg-card border-t border-border sticky bottom-0 z-50 shadow-lg">
           <div className="max-w-6xl mx-auto flex justify-around py-2">
             {navItems.map(({ href, icon: Icon, label }) => {
               const isActive = location === href || location.startsWith(href + "/");
