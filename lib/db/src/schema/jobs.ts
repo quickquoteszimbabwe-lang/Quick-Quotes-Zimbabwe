@@ -13,6 +13,7 @@ export const jobsTable = pgTable("jobs", {
   status: text("status").notNull().default("open"),
   selectedProfessionalId: integer("selected_professional_id"),
   progressNote: text("progress_note"),
+  requestType: text("request_type").notNull().default("professional_service"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -10,11 +10,11 @@ import Splash from "@/pages/Splash";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Home from "@/pages/Home";
-import Jobs from "@/pages/Jobs";
+import Requests from "@/pages/Requests";
+import RequestDetail from "@/pages/RequestDetail";
+import CreateRequest from "@/pages/CreateRequest";
 import Services from "@/pages/Services";
-import CreateJob from "@/pages/CreateJob";
-import JobDetail from "@/pages/JobDetail";
-import MyQuotes from "@/pages/MyQuotes";
+import MyOffers from "@/pages/MyOffers";
 import Payments from "@/pages/Payments";
 import Profile from "@/pages/Profile";
 import Verify from "@/pages/Verify";
@@ -84,18 +84,35 @@ function AppRoutes() {
       <Route path="/services">
         <ProtectedRoute component={Services} />
       </Route>
+
+      {/* Primary routes — new marketplace terminology */}
+      <Route path="/requests/create">
+        <ProtectedRoute component={CreateRequest} roles={["customer"]} />
+      </Route>
+      <Route path="/requests/:id">
+        <ProtectedRoute component={RequestDetail} />
+      </Route>
+      <Route path="/requests">
+        <ProtectedRoute component={Requests} />
+      </Route>
+      <Route path="/offers">
+        <ProtectedRoute component={MyOffers} roles={["professional"]} />
+      </Route>
+
+      {/* Legacy redirects — keep old /jobs URLs working */}
       <Route path="/jobs/create">
-        <ProtectedRoute component={CreateJob} roles={["customer"]} />
+        <Redirect to="/requests/create" />
       </Route>
       <Route path="/jobs/:id">
-        <ProtectedRoute component={JobDetail} />
+        {(params) => <Redirect to={`/requests/${params.id}`} />}
       </Route>
       <Route path="/jobs">
-        <ProtectedRoute component={Jobs} />
+        <Redirect to="/requests" />
       </Route>
       <Route path="/quotes">
-        <ProtectedRoute component={MyQuotes} roles={["professional"]} />
+        <Redirect to="/offers" />
       </Route>
+
       <Route path="/payments">
         <ProtectedRoute component={Payments} />
       </Route>

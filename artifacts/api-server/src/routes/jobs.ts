@@ -8,7 +8,7 @@ import { getFacePhotoMap, insertJobPhotos, getJobPhotos } from "../lib/photo";
 
 const router: IRouter = Router();
 
-function formatJob(job: typeof jobsTable.$inferSelect, customerName?: string | null, photos?: string[]) {
+function formatRequest(job: typeof jobsTable.$inferSelect, clientName?: string | null, photos?: string[]) {
   return {
     id: job.id,
     customerId: job.customerId,
@@ -19,8 +19,9 @@ function formatJob(job: typeof jobsTable.$inferSelect, customerName?: string | n
     timeline: job.timeline,
     status: job.status,
     selectedProfessionalId: job.selectedProfessionalId,
+    requestType: job.requestType ?? "professional_service",
     createdAt: job.createdAt.toISOString(),
-    customerName: customerName ?? null,
+    customerName: clientName ?? null,
     photos: photos ?? [],
   };
 }
@@ -51,13 +52,13 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
     : [];
   const customerMap = new Map(customers.map(c => [c.id, c.name]));
 
-  res.json(jobs.map(j => formatJob(j, customerMap.get(j.customerId))));
+  res.json(jobs.map(j => formatRequest(j, customerMap.get(j.customerId))));
 });
 
 router.post("/", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
   if (req.user!.role !== "customer") {
-    res.status(403).json({ error: "Only customers can create jobs" });
+    res.status(403).json({ error: "Only clients can create requests" });
     return;
   }
   const parsed = CreateJobBody.safeParse(req.body);
@@ -73,6 +74,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     location: parsed.data.location,
     timeline: parsed.data.timeline ?? null,
     status: "open",
+    requestType: (parsed.data as any).requestType ?? "professional_service",
   }).returning();
 
   if (parsed.data.photos && parsed.data.photos.length > 0) {
@@ -81,14 +83,14 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   const photos = await getJobPhotos(job.id);
 
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.status(201).json(formatJob(job, customer?.name, photos));
+  res.status(201).json(formatRequest(job, customer?.name, photos));
 });
 
 router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
   const jobId = parseInt(req.params.id);
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
   if (!job) {
-    res.status(404).json({ error: "Job not found" });
+    res.status(404).json({ error: "Request not found" });
     return;
   }
 
@@ -128,6 +130,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
     timeline: job.timeline,
     status: job.status,
     selectedProfessionalId: job.selectedProfessionalId,
+    requestType: job.requestType ?? "professional_service",
     createdAt: job.createdAt.toISOString(),
     customerName: customer?.name ?? null,
     photos,
@@ -141,6 +144,13 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
         timeline: q.timeline,
         message: q.message,
         items: q.items,
+        pricingModel: q.pricingModel ?? "fixed_price",
+        discount: q.discount ? Number(q.discount) : 0,
+        depositRequired: q.depositRequired ?? false,
+        depositAmount: q.depositAmount ? Number(q.depositAmount) : 0,
+        extras: q.extras ?? [],
+        milestones: q.milestones ?? [],
+        notes: q.notes ?? null,
         createdAt: q.createdAt.toISOString(),
         professionalName: prof?.name ?? null,
         professionalRating: prof?.rating ? Number(prof.rating) : null,
@@ -184,7 +194,7 @@ router.patch("/:id", requireAuth, async (req: AuthRequest, res) => {
 
   const [job] = await db.update(jobsTable).set(updates).where(eq(jobsTable.id, jobId)).returning();
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, job.customerId));
-  res.json(formatJob(job, customer?.name));
+  res.json(formatRequest(job, customer?.name));
 });
 
 router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
@@ -204,7 +214,7 @@ router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
 
   const [quote] = await db.select().from(quotesTable).where(and(eq(quotesTable.id, parsed.data.quoteId), eq(quotesTable.jobId, jobId)));
   if (!quote) {
-    res.status(404).json({ error: "Quote not found" });
+    res.status(404).json({ error: "Offer not found" });
     return;
   }
 
@@ -214,7 +224,7 @@ router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
   }).where(eq(jobsTable.id, jobId)).returning();
 
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.json(formatJob(updated, customer?.name));
+  res.json(formatRequest(updated, customer?.name));
 });
 
 router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
@@ -235,7 +245,7 @@ router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
   }
 
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.json(formatJob(updated, customer?.name));
+  res.json(formatRequest(updated, customer?.name));
 });
 
 export default router;
