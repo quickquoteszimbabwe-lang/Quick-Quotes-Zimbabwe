@@ -5,7 +5,9 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuoteExtra } from "./quoteExtra";
 import type { QuoteItem } from "./quoteItem";
+import type { QuoteMilestone } from "./quoteMilestone";
 
 export interface Quote {
   id: number;
@@ -16,6 +18,18 @@ export interface Quote {
   /** @nullable */
   message?: string | null;
   items?: QuoteItem[];
+  /** @nullable */
+  pricingModel?: string | null;
+  /** @nullable */
+  discount?: number | null;
+  /** @nullable */
+  depositRequired?: boolean | null;
+  /** @nullable */
+  depositAmount?: number | null;
+  extras?: QuoteExtra[];
+  milestones?: QuoteMilestone[];
+  /** @nullable */
+  notes?: string | null;
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;

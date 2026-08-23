@@ -1070,6 +1070,9 @@ components:
           enum: [open, in_progress, completed, cancelled]
         selectedProfessionalId:
           type: ["integer", "null"]
+        requestType:
+          type: string
+          enum: [professional_service, listing_rental, bookable_service]
         createdAt:
           type: string
         customerName:
@@ -1109,6 +1112,9 @@ components:
           type: string
         selectedProfessionalId:
           type: ["integer", "null"]
+        requestType:
+          type: string
+          enum: [professional_service, listing_rental, bookable_service]
         createdAt:
           type: string
         customerName:
@@ -1149,6 +1155,9 @@ components:
           type: string
         timeline:
           type: ["string", "null"]
+        requestType:
+          type: string
+          enum: [professional_service, listing_rental, bookable_service]
         photos:
           type: array
           items:
@@ -1384,12 +1393,41 @@ components:
           type: string
         quantity:
           type: number
+        unit:
+          type: string
         unitPrice:
           type: number
       required:
         - description
         - quantity
         - unitPrice
+
+    QuoteExtra:
+      type: object
+      properties:
+        description:
+          type: string
+        amount:
+          type: number
+      required:
+        - description
+        - amount
+
+    QuoteMilestone:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        dueDate:
+          type: ["string", "null"]
+      required:
+        - title
+        - description
+        - amount
 
     Quote:
       type: object
@@ -1410,6 +1448,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuoteItem"
+        pricingModel:
+          type: ["string", "null"]
+        discount:
+          type: ["number", "null"]
+        depositRequired:
+          type: ["boolean", "null"]
+        depositAmount:
+          type: ["number", "null"]
+        extras:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteExtra"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteMilestone"
+        notes:
+          type: ["string", "null"]
         createdAt:
           type: string
         professionalName:
@@ -1447,6 +1503,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuoteItem"
+        pricingModel:
+          type: ["string", "null"]
+        discount:
+          type: ["number", "null"]
+        depositRequired:
+          type: ["boolean", "null"]
+        depositAmount:
+          type: ["number", "null"]
+        extras:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteExtra"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteMilestone"
+        notes:
+          type: ["string", "null"]
         createdAt:
           type: string
         professionalName:
@@ -1484,6 +1558,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuoteItem"
+        pricingModel:
+          type: ["string", "null"]
+        discount:
+          type: ["number", "null"]
+        depositRequired:
+          type: ["boolean", "null"]
+        depositAmount:
+          type: ["number", "null"]
+        extras:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteExtra"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteMilestone"
+        notes:
+          type: ["string", "null"]
       required:
         - jobId
         - price

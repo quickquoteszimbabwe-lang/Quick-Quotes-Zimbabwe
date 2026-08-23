@@ -128,6 +128,15 @@ export const JobStatus = {
   cancelled: "cancelled",
 } as const;
 
+export type JobRequestType =
+  (typeof JobRequestType)[keyof typeof JobRequestType];
+
+export const JobRequestType = {
+  professional_service: "professional_service",
+  listing_rental: "listing_rental",
+  bookable_service: "bookable_service",
+} as const;
+
 export interface Job {
   id: number;
   customerId: number;
@@ -140,16 +149,40 @@ export interface Job {
   status: JobStatus;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  requestType?: JobRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
   photos?: string[];
 }
 
+export type JobDetailRequestType =
+  (typeof JobDetailRequestType)[keyof typeof JobDetailRequestType];
+
+export const JobDetailRequestType = {
+  professional_service: "professional_service",
+  listing_rental: "listing_rental",
+  bookable_service: "bookable_service",
+} as const;
+
 export interface QuoteItem {
   description: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
+}
+
+export interface QuoteExtra {
+  description: string;
+  amount: number;
+}
+
+export interface QuoteMilestone {
+  title: string;
+  description: string;
+  amount: number;
+  /** @nullable */
+  dueDate?: string | null;
 }
 
 export interface QuoteDetail {
@@ -161,6 +194,18 @@ export interface QuoteDetail {
   /** @nullable */
   message?: string | null;
   items?: QuoteItem[];
+  /** @nullable */
+  pricingModel?: string | null;
+  /** @nullable */
+  discount?: number | null;
+  /** @nullable */
+  depositRequired?: boolean | null;
+  /** @nullable */
+  depositAmount?: number | null;
+  extras?: QuoteExtra[];
+  milestones?: QuoteMilestone[];
+  /** @nullable */
+  notes?: string | null;
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;
@@ -228,6 +273,7 @@ export interface JobDetail {
   status: string;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  requestType?: JobDetailRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
@@ -237,6 +283,15 @@ export interface JobDetail {
   review?: Review;
 }
 
+export type CreateJobRequestRequestType =
+  (typeof CreateJobRequestRequestType)[keyof typeof CreateJobRequestRequestType];
+
+export const CreateJobRequestRequestType = {
+  professional_service: "professional_service",
+  listing_rental: "listing_rental",
+  bookable_service: "bookable_service",
+} as const;
+
 export interface CreateJobRequest {
   category: string;
   service: string;
@@ -244,6 +299,7 @@ export interface CreateJobRequest {
   location: string;
   /** @nullable */
   timeline?: string | null;
+  requestType?: CreateJobRequestRequestType;
   photos?: string[];
 }
 
@@ -362,6 +418,18 @@ export interface Quote {
   /** @nullable */
   message?: string | null;
   items?: QuoteItem[];
+  /** @nullable */
+  pricingModel?: string | null;
+  /** @nullable */
+  discount?: number | null;
+  /** @nullable */
+  depositRequired?: boolean | null;
+  /** @nullable */
+  depositAmount?: number | null;
+  extras?: QuoteExtra[];
+  milestones?: QuoteMilestone[];
+  /** @nullable */
+  notes?: string | null;
   createdAt: string;
   /** @nullable */
   professionalName?: string | null;
@@ -380,6 +448,18 @@ export interface CreateQuoteRequest {
   /** @nullable */
   message?: string | null;
   items?: QuoteItem[];
+  /** @nullable */
+  pricingModel?: string | null;
+  /** @nullable */
+  discount?: number | null;
+  /** @nullable */
+  depositRequired?: boolean | null;
+  /** @nullable */
+  depositAmount?: number | null;
+  extras?: QuoteExtra[];
+  milestones?: QuoteMilestone[];
+  /** @nullable */
+  notes?: string | null;
 }
 
 export type CreatePaymentRequestMethod =

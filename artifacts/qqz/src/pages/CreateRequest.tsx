@@ -39,6 +39,7 @@ export default function CreateRequest() {
   const queryClient = useQueryClient();
   const params = new URLSearchParams(window.location.search);
   const initialCategory = params.get("category") || "";
+  const initialService = params.get("service") || "";
 
   const { data: categoryTree } = useGetCategoryTree();
 
@@ -46,7 +47,7 @@ export default function CreateRequest() {
   const [requestType, setRequestType] = useState<RequestTypeValue>("professional_service");
   const [category, setCategory] = useState(initialCategory);
   const [subcategory, setSubcategory] = useState("");
-  const [service, setService] = useState("");
+  const [service, setService] = useState(initialService);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [timeline, setTimeline] = useState("");

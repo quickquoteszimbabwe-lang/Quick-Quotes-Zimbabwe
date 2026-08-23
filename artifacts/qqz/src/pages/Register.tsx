@@ -210,8 +210,8 @@ export default function Register() {
                   <User size={24} className={role === "customer" ? "text-white" : "text-muted-foreground"} />
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-foreground">Customer</div>
-                  <div className="text-xs text-muted-foreground mt-1">Post jobs & hire professionals</div>
+                  <div className="font-semibold text-foreground">Client</div>
+                  <div className="text-xs text-muted-foreground mt-1">Post requests & hire providers</div>
                 </div>
               </button>
               <button onClick={() => setRole("professional")}
@@ -220,8 +220,8 @@ export default function Register() {
                   <Briefcase size={24} className={role === "professional" ? "text-white" : "text-muted-foreground"} />
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-foreground">Professional</div>
-                  <div className="text-xs text-muted-foreground mt-1">Offer services & earn</div>
+                  <div className="font-semibold text-foreground">Provider</div>
+                  <div className="text-xs text-muted-foreground mt-1">Offer services, rentals & bookings</div>
                 </div>
               </button>
             </div>

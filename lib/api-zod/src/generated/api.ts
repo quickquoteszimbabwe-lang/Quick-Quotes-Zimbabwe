@@ -194,6 +194,9 @@ export const GetJobsResponseItem = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
@@ -209,6 +212,9 @@ export const CreateJobBody = zod.object({
   description: zod.string(),
   location: zod.string(),
   timeline: zod.string().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   photos: zod.array(zod.string()).optional(),
 });
 
@@ -229,6 +235,9 @@ export const GetJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.string(),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
@@ -245,10 +254,34 @@ export const GetJobResponse = zod.object({
           zod.object({
             description: zod.string(),
             quantity: zod.number(),
+            unit: zod.string().optional(),
             unitPrice: zod.number(),
           }),
         )
         .optional(),
+      pricingModel: zod.string().nullish(),
+      discount: zod.number().nullish(),
+      depositRequired: zod.boolean().nullish(),
+      depositAmount: zod.number().nullish(),
+      extras: zod
+        .array(
+          zod.object({
+            description: zod.string(),
+            amount: zod.number(),
+          }),
+        )
+        .optional(),
+      milestones: zod
+        .array(
+          zod.object({
+            title: zod.string(),
+            description: zod.string(),
+            amount: zod.number(),
+            dueDate: zod.string().nullish(),
+          }),
+        )
+        .optional(),
+      notes: zod.string().nullish(),
       createdAt: zod.string(),
       professionalName: zod.string().nullish(),
       professionalRating: zod.number().nullish(),
@@ -305,6 +338,9 @@ export const UpdateJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
@@ -331,6 +367,9 @@ export const SelectQuoteResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
@@ -353,6 +392,9 @@ export const CompleteJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
@@ -371,10 +413,34 @@ export const CreateQuoteBody = zod.object({
       zod.object({
         description: zod.string(),
         quantity: zod.number(),
+        unit: zod.string().optional(),
         unitPrice: zod.number(),
       }),
     )
     .optional(),
+  pricingModel: zod.string().nullish(),
+  discount: zod.number().nullish(),
+  depositRequired: zod.boolean().nullish(),
+  depositAmount: zod.number().nullish(),
+  extras: zod
+    .array(
+      zod.object({
+        description: zod.string(),
+        amount: zod.number(),
+      }),
+    )
+    .optional(),
+  milestones: zod
+    .array(
+      zod.object({
+        title: zod.string(),
+        description: zod.string(),
+        amount: zod.number(),
+        dueDate: zod.string().nullish(),
+      }),
+    )
+    .optional(),
+  notes: zod.string().nullish(),
 });
 
 /**
@@ -392,10 +458,34 @@ export const GetMyQuotesResponseItem = zod.object({
       zod.object({
         description: zod.string(),
         quantity: zod.number(),
+        unit: zod.string().optional(),
         unitPrice: zod.number(),
       }),
     )
     .optional(),
+  pricingModel: zod.string().nullish(),
+  discount: zod.number().nullish(),
+  depositRequired: zod.boolean().nullish(),
+  depositAmount: zod.number().nullish(),
+  extras: zod
+    .array(
+      zod.object({
+        description: zod.string(),
+        amount: zod.number(),
+      }),
+    )
+    .optional(),
+  milestones: zod
+    .array(
+      zod.object({
+        title: zod.string(),
+        description: zod.string(),
+        amount: zod.number(),
+        dueDate: zod.string().nullish(),
+      }),
+    )
+    .optional(),
+  notes: zod.string().nullish(),
   createdAt: zod.string(),
   professionalName: zod.string().nullish(),
   professionalRating: zod.number().nullish(),
@@ -537,6 +627,9 @@ export const AdminGetJobsResponseItem = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  requestType: zod
+    .enum(["professional_service", "listing_rental", "bookable_service"])
+    .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),

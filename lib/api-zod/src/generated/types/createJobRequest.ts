@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateJobRequestRequestType } from "./createJobRequestRequestType";
 
 export interface CreateJobRequest {
   category: string;
@@ -13,5 +14,6 @@ export interface CreateJobRequest {
   location: string;
   /** @nullable */
   timeline?: string | null;
+  requestType?: CreateJobRequestRequestType;
   photos?: string[];
 }

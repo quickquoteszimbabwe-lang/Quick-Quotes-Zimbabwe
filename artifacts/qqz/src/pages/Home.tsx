@@ -153,16 +153,11 @@ export default function Home() {
                     color.border
                   )}
                 >
-                  <div
-                    className={cn(
-                      "p-2.5 rounded-xl shrink-0",
-                      color.iconBg ?? "bg-white/60"
-                    )}
-                  >
-                    <Icon size={20} className={color.text} />
+                  <div className={cn("p-2.5 rounded-xl shrink-0", color.iconBg)}>
+                    <Icon size={20} className={color.icon} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn("font-semibold text-sm", color.text)}>{cat.name}</p>
+                    <p className={cn("font-semibold text-sm", color.icon)}>{cat.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {totalServices} service{totalServices !== 1 ? "s" : ""}
                     </p>
@@ -171,7 +166,7 @@ export default function Home() {
                     size={16}
                     className={cn(
                       "shrink-0 transition-transform group-hover:translate-x-0.5",
-                      color.text
+                      color.icon
                     )}
                   />
                 </Link>

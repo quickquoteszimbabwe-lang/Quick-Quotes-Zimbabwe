@@ -99,9 +99,9 @@ export default function Services() {
 
   function handleServiceClick(svc: FlatService) {
     if (user?.role === "customer") {
-      navigate(`/jobs/create?category=${encodeURIComponent(svc.categoryName)}&service=${encodeURIComponent(svc.serviceName)}`);
+      navigate(`/requests/create?category=${encodeURIComponent(svc.categoryName)}&service=${encodeURIComponent(svc.serviceName)}`);
     } else {
-      navigate(`/jobs?category=${encodeURIComponent(svc.categoryName)}`);
+      navigate(`/requests?category=${encodeURIComponent(svc.categoryName)}`);
     }
   }
 

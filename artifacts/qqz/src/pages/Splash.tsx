@@ -20,9 +20,9 @@ export default function Splash() {
           className="w-56 h-auto mb-6 drop-shadow-lg"
           style={{ filter: "brightness(0) invert(1)" }}
         />
-        <p className="text-lg text-white/80 mb-2">Connect with trusted professionals</p>
+        <p className="text-lg text-white/80 mb-2">Zimbabwe's marketplace for trusted services</p>
         <p className="text-sm text-white/60 mb-10 max-w-sm">
-          Get competitive quotes from verified local professionals for any service in Zimbabwe
+          Find services, rentals, consultations and bookings from verified local providers
         </p>
 
         <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-sm">

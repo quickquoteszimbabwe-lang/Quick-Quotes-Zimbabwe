@@ -124,7 +124,7 @@ export default function Profile() {
       {user?.role === "professional" && (
         <div className="bg-card rounded-2xl border border-border p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-foreground">Professional Profile</h2>
+            <h2 className="font-bold text-foreground">Provider Profile</h2>
             {profile?.professional && (
               <button onClick={startEditProfessional} className="text-muted-foreground hover:text-primary p-1">
                 <Edit2 size={18} />
@@ -167,7 +167,7 @@ export default function Profile() {
                     {Number(profile.professional.rating).toFixed(1)}
                   </span>
                 )}
-                <span className="text-sm text-muted-foreground">{profile.professional.completedJobs} jobs completed</span>
+                <span className="text-sm text-muted-foreground">{profile.professional.completedJobs} requests completed</span>
               </div>
               {profile.professional.bio && <p className="text-sm text-muted-foreground">{profile.professional.bio}</p>}
               {profile.professional.location && <p className="text-sm text-muted-foreground">📍 {profile.professional.location}</p>}
