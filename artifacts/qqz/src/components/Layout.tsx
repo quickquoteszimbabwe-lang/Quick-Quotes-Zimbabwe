@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Home, FileText, CreditCard, User, Shield, Send, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRole } from "@/lib/pricingModels";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 
 interface LayoutProps {
   children: ReactNode;
@@ -91,6 +92,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </nav>
       )}
+      <InstallAppPrompt />
     </div>
   );
 }

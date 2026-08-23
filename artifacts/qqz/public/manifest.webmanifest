@@ -1,0 +1,21 @@
+{
+  "name": "Quick Quotes Zimbabwe",
+  "short_name": "QQZ",
+  "description": "Zimbabwe's marketplace for trusted services, rentals, consultations and bookings.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0A3D62",
+  "background_color": "#F8F9FA",
+  "lang": "en-ZW",
+  "categories": ["business", "shopping", "services"],
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
