@@ -34,17 +34,17 @@ export default function Admin() {
     <div className="space-y-4">
       <div className="bg-primary text-white rounded-2xl p-4">
         <h1 className="text-xl font-bold">Admin Panel</h1>
-        <p className="text-sm text-white/70">Manage users, jobs, payments, and services</p>
+         <p className="text-sm text-white/70">Manage users, requests, payments, and services</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <StatCard icon={Users} label="Users" value={users?.length || 0} color="text-blue-600" />
-        <StatCard icon={Briefcase} label="Jobs" value={jobs?.length || 0} color="text-green-600" />
+         <StatCard icon={Briefcase} label="Requests" value={jobs?.length || 0} color="text-green-600" />
         <StatCard icon={CreditCard} label="Payments" value={payments?.length || 0} color="text-purple-600" />
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {(["users", "jobs", "payments", "services"] as Tab[]).map(t => (
+         {(["users", "jobs", "payments", "services"] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -53,7 +53,7 @@ export default function Admin() {
               tab === t ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground hover:border-primary/40"
             )}
           >
-            {t}
+             {t === "jobs" ? "requests" : t}
           </button>
         ))}
       </div>

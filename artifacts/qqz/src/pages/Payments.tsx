@@ -26,7 +26,7 @@ export default function Payments() {
         <div className="text-center py-12">
           <CreditCard size={48} className="mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-muted-foreground font-medium">No payment records yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Payments appear here when jobs are funded</p>
+          <p className="text-sm text-muted-foreground mt-1">Payments appear here when requests are funded</p>
         </div>
       )}
 

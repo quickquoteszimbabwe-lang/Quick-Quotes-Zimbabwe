@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { JobDetailRequestType } from "./jobDetailRequestType";
 import type { Payment } from "./payment";
 import type { QuoteDetail } from "./quoteDetail";
 import type { Review } from "./review";
@@ -21,6 +22,7 @@ export interface JobDetail {
   status: string;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  requestType?: JobDetailRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;

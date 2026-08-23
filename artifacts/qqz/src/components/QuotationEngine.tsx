@@ -1,31 +1,22 @@
 /**
  * QuotationEngine — Universal pricing & quotation component for QQZ.
- * Supports every category, transaction type, and pricing model without
- * modification. Providers choose the pricing model; the engine adapts.
+ *
+ * mode="create" → Provider builds a new offer (full interactive form)
+ * mode="view"   → Invoice-style display of a submitted offer
  */
 
 import { useState } from "react";
 import {
-  Plus,
-  Trash2,
-  AlertCircle,
-  CheckCircle,
-  Star,
-  User as UserIcon,
-  ChevronDown,
-  ChevronUp,
-  Milestone,
-  Tag,
-  StickyNote,
-  Percent,
-  Wallet,
+  Plus, Trash2, AlertCircle, CheckCircle,
+  Star, User as UserIcon, ChevronDown, ChevronUp,
+  Milestone, Tag, StickyNote, Percent, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { PRICING_MODELS, getPricingModel } from "@/lib/pricingModels";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Types
+// Shared types
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface LineItem {
@@ -40,7 +31,7 @@ export interface Extra {
   amount: string;
 }
 
-export interface Milestone {
+export interface MilestoneItem {
   title: string;
   description: string;
   amount: string;
@@ -53,18 +44,49 @@ export interface QuoteFormData {
   discount: string;
   depositRequired: boolean;
   depositAmount: string;
-  milestones: Milestone[];
+  milestones: MilestoneItem[];
   notes: string;
   timeline: string;
   message: string;
 }
 
-const emptyItem = (): LineItem => ({ description: "", quantity: "1", unit: "", unitPrice: "" });
+// Helpers
+const emptyItem = (unit = ""): LineItem => ({ description: "", quantity: "1", unit, unitPrice: "" });
 const emptyExtra = (): Extra => ({ description: "", amount: "" });
-const emptyMilestone = (): Milestone => ({ title: "", description: "", amount: "" });
+const emptyMilestone = (): MilestoneItem => ({ title: "", description: "", amount: "" });
+
+function safeNum(s: string) {
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+// Small labelled text input
+function Field({
+  label, value, onChange, placeholder, type = "text", inputMode, required,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
+      </label>
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground/50"
+      />
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Create Mode
+// CREATE mode
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CreateModeProps {
@@ -82,7 +104,7 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
   const [discount, setDiscount] = useState("");
   const [depositRequired, setDepositRequired] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
   const [notes, setNotes] = useState("");
   const [timeline, setTimeline] = useState("");
   const [message, setMessage] = useState("");
@@ -92,265 +114,263 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
 
   const model = getPricingModel(pricingModel);
 
-  const itemsTotal = items.reduce((sum, item) => {
-    return sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-  }, 0);
-
-  const extrasTotal = extras.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+  // Live totals
+  const itemsTotal = items.reduce((s, it) => s + safeNum(it.quantity) * safeNum(it.unitPrice), 0);
+  const extrasTotal = extras.reduce((s, e) => s + safeNum(e.amount), 0);
   const subtotal = itemsTotal + extrasTotal;
-  const discountAmt = Math.min(subtotal, parseFloat(discount) || 0);
+  const discountAmt = Math.min(subtotal, safeNum(discount));
   const total = Math.max(0, subtotal - discountAmt);
 
   function updateItem(idx: number, field: keyof LineItem, value: string) {
-    setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
+    setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: value } : it));
+  }
+  function addItem() {
+    setItems((prev) => [...prev, emptyItem(model.unit)]);
+  }
+  function removeItem(idx: number) {
+    setItems((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
   }
 
   function updateExtra(idx: number, field: keyof Extra, value: string) {
-    setExtras((prev) => prev.map((e, i) => (i === idx ? { ...e, [field]: value } : e)));
+    setExtras((prev) => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
   }
 
-  function updateMilestone(idx: number, field: keyof Milestone, value: string) {
-    setMilestones((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: value } : m)));
+  function updateMilestone(idx: number, field: keyof MilestoneItem, value: string) {
+    setMilestones((prev) => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
-    const validItems = items.filter((item) => item.description.trim() !== "");
+    const validItems = items.filter((it) => it.description.trim() && safeNum(it.unitPrice) > 0);
     if (validItems.length === 0) {
-      setFormError("Add at least one line item with a description.");
+      setFormError("Add at least one line item with a description and rate.");
       return;
     }
     if (!timeline.trim()) {
       setFormError("Timeline is required.");
       return;
     }
-    onSubmit({
-      pricingModel,
-      items,
-      extras,
-      discount,
-      depositRequired,
-      depositAmount,
-      milestones,
-      notes,
-      timeline,
-      message,
-    });
+    if (total <= 0) {
+      setFormError("Total must be greater than zero.");
+      return;
+    }
+    onSubmit({ pricingModel, items, extras, discount, depositRequired, depositAmount, milestones, notes, timeline, message });
   }
+
+  const displayErr = error || formError;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {(error || formError) && (
-        <div className="flex items-center gap-2 bg-destructive/10 text-destructive px-3 py-2 rounded-lg text-sm">
-          <AlertCircle size={14} /> {error || formError}
+      {displayErr && (
+        <div className="flex items-start gap-2 bg-destructive/10 text-destructive px-3 py-2.5 rounded-xl text-sm">
+          <AlertCircle size={15} className="shrink-0 mt-0.5" /> {displayErr}
         </div>
       )}
 
-      {/* Pricing Model */}
+      {/* ── Pricing Model ── */}
       <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-foreground">Pricing Model *</label>
+        <label className="text-sm font-bold text-foreground">Pricing Model</label>
         <select
           value={pricingModel}
           onChange={(e) => {
             const m = getPricingModel(e.target.value);
             setPricingModel(e.target.value);
-            // Auto-fill unit in all items
-            setItems((prev) => prev.map((item) => ({ ...item, unit: m.unit })));
+            setItems((prev) => prev.map((it) => ({ ...it, unit: m.unit })));
           }}
-          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
           {PRICING_MODELS.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
+            <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
-        <p className="text-xs text-muted-foreground">{model.description}</p>
+        <p className="text-xs text-muted-foreground pl-1">{model.description}</p>
       </div>
 
-      {/* Line Items */}
+      {/* ── Line Items ── */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">
-          Line Items *
-          <span className="text-muted-foreground font-normal ml-1">(unlimited)</span>
-        </label>
-        <div className="border border-border rounded-xl overflow-hidden">
-          {/* Header */}
-          <div
-            className="grid gap-1 bg-muted/70 px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide"
-            style={{ gridTemplateColumns: "1fr 60px 60px 90px 28px" }}
-          >
-            <span>Description</span>
-            <span className="text-right">Qty</span>
-            <span className="text-right">Unit</span>
-            <span className="text-right">Rate (USD)</span>
-            <span />
-          </div>
-          <div className="divide-y divide-border">
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className="grid gap-1 px-2 py-2 items-center"
-                style={{ gridTemplateColumns: "1fr 60px 60px 90px 28px" }}
-              >
-                <input
-                  type="text"
-                  value={item.description}
-                  onChange={(e) => updateItem(idx, "description", e.target.value)}
-                  placeholder="e.g. Labour, Materials, Transport"
-                  className="border-none bg-transparent text-sm focus:outline-none px-1 py-1 placeholder:text-muted-foreground/50"
-                />
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) => updateItem(idx, "quantity", e.target.value)}
-                  min="0"
-                  step="any"
-                  className="w-full border border-border/60 rounded px-1.5 py-1 text-sm text-right bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
-                />
-                <input
-                  type="text"
-                  value={item.unit}
-                  onChange={(e) => updateItem(idx, "unit", e.target.value)}
-                  placeholder={model.unit || "unit"}
-                  className="w-full border border-border/60 rounded px-1.5 py-1 text-sm text-right bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
-                />
-                <input
-                  type="number"
-                  value={item.unitPrice}
-                  onChange={(e) => updateItem(idx, "unitPrice", e.target.value)}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full border border-border/60 rounded px-1.5 py-1 text-sm text-right bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev))
-                  }
-                  disabled={items.length === 1}
-                  className="text-muted-foreground hover:text-destructive disabled:opacity-30 flex justify-center"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-          {/* Row totals footer */}
-          <div className="bg-muted/30 border-t border-border px-3 py-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setItems((prev) => [...prev, { ...emptyItem(), unit: model.unit }])}
-              className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-            >
-              <Plus size={13} /> Add line item
-            </button>
-            <span className="text-xs font-semibold text-foreground">
-              Items subtotal: {formatCurrency(itemsTotal)}
-            </span>
-          </div>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-bold text-foreground">
+            Line Items <span className="text-muted-foreground font-normal">(unlimited)</span>
+          </label>
+          <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+            Subtotal: {formatCurrency(itemsTotal)}
+          </span>
         </div>
+
+        <div className="space-y-2">
+          {items.map((item, idx) => {
+            const rowTotal = safeNum(item.quantity) * safeNum(item.unitPrice);
+            return (
+              <div key={idx} className="bg-muted/40 rounded-xl p-3 space-y-2 border border-border/50">
+                {/* Description row */}
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) => updateItem(idx, "description", e.target.value)}
+                      placeholder={`Line item ${idx + 1} — e.g. Labour, Materials, Transport`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(idx)}
+                    disabled={items.length === 1}
+                    className="mt-0.5 p-1.5 text-muted-foreground hover:text-destructive disabled:opacity-25 rounded-lg hover:bg-destructive/10 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+
+                {/* Qty / Unit / Rate / Total */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">Qty</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={item.quantity}
+                      onChange={(e) => updateItem(idx, "quantity", e.target.value)}
+                      placeholder="1"
+                      className="w-full border border-border rounded-lg px-2 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-center"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">Unit</span>
+                    <input
+                      type="text"
+                      value={item.unit}
+                      onChange={(e) => updateItem(idx, "unit", e.target.value)}
+                      placeholder={model.unit || "unit"}
+                      className="w-full border border-border rounded-lg px-2 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-center"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">Rate (USD)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.unitPrice}
+                      onChange={(e) => updateItem(idx, "unitPrice", e.target.value)}
+                      placeholder="0.00"
+                      className="w-full border border-border rounded-lg px-2 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-right"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">Total</span>
+                    <div className="border border-border/40 rounded-lg px-2 py-2 text-sm bg-background/50 text-right font-semibold text-foreground">
+                      {rowTotal > 0 ? formatCurrency(rowTotal) : "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={addItem}
+          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-2.5 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all"
+        >
+          <Plus size={16} /> Add line item
+        </button>
       </div>
 
-      {/* Extras toggle */}
+      {/* ── Optional Extras ── */}
       <button
         type="button"
         onClick={() => setShowExtras((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
       >
         <span className="flex items-center gap-2">
-          <Tag size={14} /> Optional Extras
+          <Tag size={14} />
+          Optional Extras
           {extras.length > 0 && (
-            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-              {extras.length}
+            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+              {extras.length} · {formatCurrency(extrasTotal)}
             </span>
           )}
         </span>
-        {showExtras ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        {showExtras ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
       {showExtras && (
-        <div className="border border-border rounded-xl overflow-hidden -mt-2">
-          <div className="grid grid-cols-[1fr_100px_28px] gap-1 bg-muted/70 px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-            <span>Description</span>
-            <span className="text-right">Amount (USD)</span>
-            <span />
-          </div>
-          <div className="divide-y divide-border">
-            {extras.map((e, idx) => (
-              <div key={idx} className="grid grid-cols-[1fr_100px_28px] gap-1 px-2 py-2 items-center">
-                <input
-                  type="text"
-                  value={e.description}
-                  onChange={(ev) => updateExtra(idx, "description", ev.target.value)}
-                  placeholder="e.g. Permit fees, Delivery"
-                  className="border-none bg-transparent text-sm focus:outline-none px-1 py-1"
-                />
-                <input
-                  type="number"
-                  value={e.amount}
-                  onChange={(ev) => updateExtra(idx, "amount", ev.target.value)}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full border border-border/60 rounded px-1.5 py-1 text-sm text-right bg-background focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setExtras((prev) => prev.filter((_, i) => i !== idx))}
-                  className="text-muted-foreground hover:text-destructive flex justify-center"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="bg-muted/30 border-t border-border px-3 py-2">
-            <button
-              type="button"
-              onClick={() => setExtras((prev) => [...prev, emptyExtra()])}
-              className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-            >
-              <Plus size={13} /> Add extra
-            </button>
-          </div>
+        <div className="space-y-2 -mt-2">
+          {extras.map((e, idx) => (
+            <div key={idx} className="flex items-center gap-2 bg-muted/40 rounded-xl p-3 border border-border/50">
+              <input
+                type="text"
+                value={e.description}
+                onChange={(ev) => updateExtra(idx, "description", ev.target.value)}
+                placeholder="Extra — e.g. Permit fees, Delivery charge"
+                className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={e.amount}
+                onChange={(ev) => updateExtra(idx, "amount", ev.target.value)}
+                placeholder="0.00"
+                className="w-24 border border-border rounded-lg px-2 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-right"
+              />
+              <button
+                type="button"
+                onClick={() => setExtras((prev) => prev.filter((_, i) => i !== idx))}
+                className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setExtras((prev) => [...prev, emptyExtra()])}
+            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline pl-1"
+          >
+            <Plus size={14} /> Add extra
+          </button>
         </div>
       )}
 
-      {/* Discount */}
+      {/* ── Discount & Deposit ── */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+          <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
             <Percent size={13} /> Discount (USD)
           </label>
           <input
             type="number"
-            value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
             min="0"
             step="0.01"
+            value={discount}
+            onChange={(e) => setDiscount(e.target.value)}
             placeholder="0.00"
-            className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <Wallet size={13} /> Deposit Required
+          <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <Wallet size={13} /> Deposit
           </label>
-          <div className="flex items-center gap-3 pt-2.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setDepositRequired((v) => !v)}
               className={cn(
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none",
                 depositRequired ? "bg-primary" : "bg-muted"
               )}
             >
               <span
                 className={cn(
-                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
+                  "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
                   depositRequired ? "translate-x-6" : "translate-x-1"
                 )}
               />
@@ -358,39 +378,43 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
             {depositRequired && (
               <input
                 type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
                 min="0"
                 step="0.01"
-                placeholder="Deposit USD"
-                className="flex-1 border border-border rounded-lg px-3 py-1.5 text-sm bg-background focus:outline-none"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="Amount"
+                className="flex-1 border border-border rounded-xl px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
+            )}
+            {!depositRequired && (
+              <span className="text-xs text-muted-foreground">off</span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Milestones toggle */}
+      {/* ── Milestones ── */}
       <button
         type="button"
         onClick={() => setShowMilestones((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
       >
         <span className="flex items-center gap-2">
-          <Milestone size={14} /> Milestone Payments
+          <Milestone size={14} />
+          Milestone Payments
           {milestones.length > 0 && (
-            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
               {milestones.length}
             </span>
           )}
         </span>
-        {showMilestones ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        {showMilestones ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
       {showMilestones && (
         <div className="space-y-2 -mt-2">
           {milestones.map((m, idx) => (
-            <div key={idx} className="border border-border rounded-xl p-3 space-y-2">
+            <div key={idx} className="bg-muted/40 rounded-xl p-3 border border-border/50 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-primary uppercase tracking-wide">
                   Milestone {idx + 1}
@@ -398,34 +422,34 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
                 <button
                   type="button"
                   onClick={() => setMilestones((prev) => prev.filter((_, i) => i !== idx))}
-                  className="text-muted-foreground hover:text-destructive"
+                  className="p-1 text-muted-foreground hover:text-destructive rounded"
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
-              <input
-                type="text"
-                value={m.title}
-                onChange={(e) => updateMilestone(idx, "title", e.target.value)}
-                placeholder="e.g. Deposit, Foundation, Completion"
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none"
-              />
               <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={m.title}
+                  onChange={(e) => updateMilestone(idx, "title", e.target.value)}
+                  placeholder="e.g. Deposit, Foundation, Completion"
+                  className="col-span-2 border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
                 <input
                   type="text"
                   value={m.description}
                   onChange={(e) => updateMilestone(idx, "description", e.target.value)}
-                  placeholder="What work is done at this stage"
-                  className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none"
+                  placeholder="What work is done"
+                  className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={m.amount}
                   onChange={(e) => updateMilestone(idx, "amount", e.target.value)}
                   placeholder="Amount USD"
-                  min="0"
-                  step="0.01"
-                  className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none"
+                  className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 text-right"
                 />
               </div>
             </div>
@@ -433,101 +457,99 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
           <button
             type="button"
             onClick={() => setMilestones((prev) => [...prev, emptyMilestone()])}
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline pl-1"
           >
             <Plus size={14} /> Add milestone
           </button>
         </div>
       )}
 
-      {/* Notes */}
+      {/* ── Notes ── */}
       <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-          <StickyNote size={13} /> Notes (optional)
+        <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
+          <StickyNote size={13} /> Notes
+          <span className="font-normal text-muted-foreground text-xs">(optional)</span>
         </label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Terms, assumptions, materials included/excluded, warranty, validity period…"
+          placeholder="Terms, assumptions, materials included/excluded, warranty, validity…"
           rows={2}
-          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+          className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
       </div>
 
-      {/* Estimated Total Summary */}
-      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-1.5">
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>Items Subtotal</span>
-          <span>{formatCurrency(itemsTotal)}</span>
-        </div>
+      {/* ── Live Total Summary ── */}
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-2">
         {extrasTotal > 0 && (
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Extras</span>
-            <span>{formatCurrency(extrasTotal)}</span>
-          </div>
+          <>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Items</span><span>{formatCurrency(itemsTotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Extras</span><span>{formatCurrency(extrasTotal)}</span>
+            </div>
+          </>
         )}
         {discountAmt > 0 && (
-          <div className="flex justify-between text-sm text-green-600">
-            <span>Discount</span>
-            <span>− {formatCurrency(discountAmt)}</span>
+          <div className="flex justify-between text-sm text-green-600 font-medium">
+            <span>Discount</span><span>− {formatCurrency(discountAmt)}</span>
           </div>
         )}
-        <div className="flex justify-between items-center pt-1.5 border-t border-primary/20">
-          <span className="font-bold text-foreground">Estimated Total</span>
-          <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
+        <div className="flex justify-between items-center border-t border-primary/20 pt-2">
+          <span className="font-bold text-foreground text-base">Estimated Total</span>
+          <span className={cn("text-2xl font-bold", total > 0 ? "text-primary" : "text-muted-foreground")}>
+            {total > 0 ? formatCurrency(total) : "USD $0.00"}
+          </span>
         </div>
-        {depositRequired && parseFloat(depositAmount) > 0 && (
-          <div className="flex justify-between text-sm text-amber-600">
-            <span>Deposit Required</span>
-            <span>{formatCurrency(parseFloat(depositAmount) || 0)}</span>
-          </div>
-        )}
-        {milestones.length > 0 && (
-          <div className="text-xs text-muted-foreground pt-1">
-            {milestones.length} milestone{milestones.length !== 1 ? "s" : ""} defined
+        {depositRequired && safeNum(depositAmount) > 0 && (
+          <div className="flex justify-between text-sm text-amber-700 font-medium bg-amber-50 rounded-lg px-3 py-1.5">
+            <span>Deposit Required Upfront</span>
+            <span>{formatCurrency(safeNum(depositAmount))}</span>
           </div>
         )}
       </div>
 
-      {/* Timeline */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-foreground">Timeline *</label>
-        <input
-          type="text"
+      {/* ── Timeline & Message ── */}
+      <div className="space-y-3">
+        <Field
+          label="Timeline *"
           value={timeline}
-          onChange={(e) => setTimeline(e.target.value)}
+          onChange={setTimeline}
           placeholder="e.g. 3 days, 1–2 weeks, 1 month"
           required
-          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
+        <div className="space-y-1.5">
+          <label className="text-sm font-bold text-foreground">
+            Cover Message <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+          </label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Introduce yourself, describe your approach and why you're the right fit…"
+            rows={3}
+            className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          />
+        </div>
       </div>
 
-      {/* Message */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-foreground">Cover Message (optional)</label>
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Introduce yourself, describe your approach and why you're the right fit…"
-          rows={3}
-          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-        />
-      </div>
-
-      <div className="flex gap-3">
+      {/* ── Actions ── */}
+      <div className="flex gap-3 pt-1">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 border border-border py-3 rounded-xl text-sm font-semibold hover:bg-muted/50 transition-colors"
+          className="flex-1 border border-border py-3 rounded-xl text-sm font-semibold hover:bg-muted/60 transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting || total <= 0}
-          className="flex-1 bg-primary text-white py-3 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="flex-1 bg-primary text-white py-3 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Submitting…" : `Submit Offer — ${formatCurrency(total)}`}
+          {isSubmitting
+            ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
+            : `Submit Offer · ${total > 0 ? formatCurrency(total) : "—"}`}
         </button>
       </div>
     </form>
@@ -535,7 +557,7 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// View Mode — Professional Invoice Layout
+// VIEW mode — invoice layout
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ViewQuote {
@@ -574,71 +596,56 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
   const model = getPricingModel(quote.pricingModel ?? "fixed_price");
 
   const itemsTotal = (quote.items ?? []).reduce(
-    (sum: number, item: any) =>
-      sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
-    0
+    (s: number, it: any) => s + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0), 0
   );
   const extrasTotal = (quote.extras ?? []).reduce(
-    (sum: number, e: any) => sum + (Number(e.amount) || 0),
-    0
+    (s: number, e: any) => s + (Number(e.amount) || 0), 0
   );
   const subtotal = itemsTotal + extrasTotal;
   const discountAmt = Math.min(subtotal, Number(quote.discount) || 0);
   const total = Math.max(0, subtotal - discountAmt);
 
   return (
-    <div
-      className={cn(
-        "bg-card rounded-2xl border p-5 space-y-4 shadow-sm",
-        isSelected ? "border-secondary ring-1 ring-secondary/30" : "border-border"
-      )}
-    >
+    <div className={cn(
+      "bg-card rounded-2xl border p-5 space-y-4 shadow-sm",
+      isSelected ? "border-secondary ring-1 ring-secondary/20" : "border-border"
+    )}>
       {/* Provider header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {quote.professionalPhotoUrl ? (
-            <img
-              src={quote.professionalPhotoUrl}
-              alt={quote.professionalName ?? "Provider"}
-              className="w-12 h-12 rounded-full object-cover border border-border shrink-0"
-            />
+            <img src={quote.professionalPhotoUrl} alt={quote.professionalName ?? "Provider"}
+              className="w-11 h-11 rounded-full object-cover border border-border shrink-0" />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <UserIcon size={20} className="text-primary" />
+            <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <UserIcon size={18} className="text-primary" />
             </div>
           )}
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-foreground">
-                {quote.professionalName ?? "Provider"}
-              </span>
+              <span className="font-bold text-foreground">{quote.professionalName ?? "Provider"}</span>
               {quote.professionalVerified && (
-                <span className="text-xs bg-secondary/10 text-secondary border border-secondary/20 px-1.5 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-secondary/10 text-secondary border border-secondary/20 px-1.5 py-0.5 rounded-full font-semibold">
                   Verified
                 </span>
               )}
               {isSelected && (
-                <span className="text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                   <CheckCircle size={10} /> Selected
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3 flex-wrap mt-0.5">
-              {quote.professionalRating && (
-                <div className="flex items-center gap-1">
-                  <Star size={12} className="text-accent fill-accent" />
-                  <span className="text-xs text-muted-foreground">
-                    {Number(quote.professionalRating).toFixed(1)} ·{" "}
-                    {quote.professionalCompletedJobs} completed
-                  </span>
-                </div>
-              )}
-              {quote.professionalExperience && (
+            {quote.professionalRating && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Star size={11} className="text-accent fill-accent" />
                 <span className="text-xs text-muted-foreground">
-                  {quote.professionalExperience} exp.
+                  {Number(quote.professionalRating).toFixed(1)} · {quote.professionalCompletedJobs} completed
                 </span>
-              )}
-            </div>
+                {quote.professionalExperience && (
+                  <span className="text-xs text-muted-foreground">· {quote.professionalExperience}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -651,61 +658,51 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
       </div>
 
       {/* Invoice table */}
-      {quote.items && quote.items.length > 0 && (
+      {(quote.items ?? []).length > 0 && (
         <div className="rounded-xl overflow-hidden border border-border">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-muted/60 text-muted-foreground border-b border-border">
-                <th className="text-left font-semibold px-3 py-2">Description</th>
-                <th className="text-right font-semibold px-2 py-2">Qty</th>
-                <th className="text-right font-semibold px-2 py-2">Unit</th>
-                <th className="text-right font-semibold px-2 py-2">Rate</th>
-                <th className="text-right font-semibold px-3 py-2">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quote.items.map((item: any, idx: number) => (
-                <tr key={idx} className="border-b border-border/40 last:border-0">
-                  <td className="px-3 py-2 text-foreground">{item.description}</td>
-                  <td className="px-2 py-2 text-right text-muted-foreground">{item.quantity}</td>
-                  <td className="px-2 py-2 text-right text-muted-foreground">{item.unit || "—"}</td>
-                  <td className="px-2 py-2 text-right text-muted-foreground">
-                    {formatCurrency(Number(item.unitPrice))}
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold text-foreground">
-                    {formatCurrency(Number(item.quantity) * Number(item.unitPrice))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Totals footer */}
-          <div className="bg-muted/30 border-t border-border px-3 py-2 space-y-1">
-            {extrasTotal > 0 && (
+          <div className="grid bg-muted/60 text-muted-foreground text-[11px] font-bold uppercase tracking-wide px-3 py-2"
+            style={{ gridTemplateColumns: "1fr 48px 48px 80px 80px" }}>
+            <span>Description</span>
+            <span className="text-right">Qty</span>
+            <span className="text-right">Unit</span>
+            <span className="text-right">Rate</span>
+            <span className="text-right">Total</span>
+          </div>
+          {(quote.items ?? []).map((it: any, idx: number) => (
+            <div key={idx} className="grid border-t border-border/40 px-3 py-2 text-sm"
+              style={{ gridTemplateColumns: "1fr 48px 48px 80px 80px" }}>
+              <span className="text-foreground">{it.description}</span>
+              <span className="text-right text-muted-foreground">{it.quantity}</span>
+              <span className="text-right text-muted-foreground">{it.unit || "—"}</span>
+              <span className="text-right text-muted-foreground">{formatCurrency(Number(it.unitPrice))}</span>
+              <span className="text-right font-semibold text-foreground">
+                {formatCurrency(Number(it.quantity) * Number(it.unitPrice))}
+              </span>
+            </div>
+          ))}
+          {/* Totals */}
+          <div className="border-t border-border bg-muted/30 px-3 py-2 space-y-1">
+            {(quote.extras ?? []).length > 0 && (
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Items subtotal</span>
-                <span>{formatCurrency(itemsTotal)}</span>
+                <span>Items subtotal</span><span>{formatCurrency(itemsTotal)}</span>
               </div>
             )}
             {(quote.extras ?? []).map((e: any, idx: number) => (
               <div key={idx} className="flex justify-between text-xs text-muted-foreground">
-                <span>{e.description}</span>
-                <span>{formatCurrency(Number(e.amount))}</span>
+                <span>{e.description}</span><span>{formatCurrency(Number(e.amount))}</span>
               </div>
             ))}
             {discountAmt > 0 && (
-              <div className="flex justify-between text-xs text-green-600">
-                <span>Discount</span>
-                <span>− {formatCurrency(discountAmt)}</span>
+              <div className="flex justify-between text-xs text-green-700 font-medium">
+                <span>Discount</span><span>− {formatCurrency(discountAmt)}</span>
               </div>
             )}
-            <div className="flex justify-between items-center pt-1 border-t border-border/60">
-              <span className="text-sm font-bold text-foreground">Total</span>
-              <span className="text-base font-bold text-primary">{formatCurrency(total)}</span>
+            <div className="flex justify-between items-center border-t border-border/60 pt-1.5">
+              <span className="font-bold text-foreground text-sm">Total</span>
+              <span className="font-bold text-primary text-base">{formatCurrency(total)}</span>
             </div>
             {quote.depositRequired && Number(quote.depositAmount) > 0 && (
-              <div className="flex justify-between text-xs text-amber-600 font-medium">
+              <div className="flex justify-between text-xs text-amber-700 font-semibold bg-amber-50 rounded-lg px-2 py-1">
                 <span>Deposit Required</span>
                 <span>{formatCurrency(Number(quote.depositAmount))}</span>
               </div>
@@ -715,47 +712,33 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
       )}
 
       {/* Milestones */}
-      {quote.milestones && quote.milestones.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
-            Payment Milestones
-          </p>
-          <div className="space-y-1.5">
-            {quote.milestones.map((m: any, idx: number) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {idx + 1}. {m.title}
-                  </p>
-                  {m.description && (
-                    <p className="text-xs text-muted-foreground">{m.description}</p>
-                  )}
-                </div>
-                <span className="text-sm font-bold text-primary shrink-0 ml-2">
-                  {formatCurrency(Number(m.amount))}
-                </span>
+      {(quote.milestones ?? []).length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Payment Milestones</p>
+          {(quote.milestones ?? []).map((m: any, idx: number) => (
+            <div key={idx} className="flex items-center justify-between bg-muted/40 rounded-xl px-3 py-2.5">
+              <div>
+                <p className="text-sm font-bold text-foreground">{idx + 1}. {m.title}</p>
+                {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
               </div>
-            ))}
-          </div>
+              <span className="text-sm font-bold text-primary shrink-0 ml-3">{formatCurrency(Number(m.amount))}</span>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Message */}
       {quote.message && (
         <div className="bg-muted/40 rounded-xl p-3">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">Provider Message</p>
-          <p className="text-sm text-foreground">{quote.message}</p>
+          <p className="text-xs font-bold text-muted-foreground mb-1">Provider Message</p>
+          <p className="text-sm text-foreground leading-relaxed">{quote.message}</p>
         </div>
       )}
 
       {/* Notes */}
       {quote.notes && (
-        <div className="text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-lg">
-          <span className="font-semibold">Notes: </span>
-          {quote.notes}
+        <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 leading-relaxed">
+          <span className="font-bold">Notes: </span>{quote.notes}
         </div>
       )}
 
@@ -766,7 +749,7 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
           disabled={isAccepting}
           className="w-full bg-secondary text-white py-3 rounded-xl text-sm font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          <CheckCircle size={16} />
+          <CheckCircle size={15} />
           {isAccepting ? "Accepting…" : "Accept This Offer"}
         </button>
       )}
@@ -775,14 +758,11 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Exported component
+// Exported wrapper
 // ─────────────────────────────────────────────────────────────────────────────
 
 type QuotationEngineProps = CreateModeProps | ViewModeProps;
 
 export function QuotationEngine(props: QuotationEngineProps) {
-  if (props.mode === "create") {
-    return <CreateMode {...props} />;
-  }
-  return <ViewMode {...props} />;
+  return props.mode === "create" ? <CreateMode {...props} /> : <ViewMode {...props} />;
 }

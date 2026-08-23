@@ -6,9 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface QuoteItem {
+export interface QuoteExtra {
   description: string;
-  quantity: number;
-  unit?: string;
-  unitPrice: number;
+  amount: number;
 }

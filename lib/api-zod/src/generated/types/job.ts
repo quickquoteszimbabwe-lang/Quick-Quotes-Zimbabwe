@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { JobRequestType } from "./jobRequestType";
 import type { JobStatus } from "./jobStatus";
 
 export interface Job {
@@ -19,6 +20,7 @@ export interface Job {
   status: JobStatus;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  requestType?: JobRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
