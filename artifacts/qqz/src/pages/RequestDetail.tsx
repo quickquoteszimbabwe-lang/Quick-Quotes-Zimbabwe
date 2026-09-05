@@ -26,6 +26,7 @@ import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { QuotationEngine, type QuoteFormData } from "@/components/QuotationEngine";
 import { formatRequestType } from "@/lib/pricingModels";
 import { cn } from "@/lib/utils";
+import { RequestChat } from "@/components/RequestChat";
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
   professional_service: Briefcase,
@@ -91,7 +92,9 @@ export default function RequestDetail() {
 
   const isClient = user?.role === "customer" && request.customerId === user?.id;
   const isProvider = user?.role === "professional";
-  const hasSubmittedOffer = request.quotes?.some((q: any) => q.professionalId === user?.id);
+  const isSelectedProvider = isProvider && request.selectedProfessionalUserId === user?.id;
+  const hasSubmittedOffer = request.quotes?.some((q: any) => q.professionalUserId === user?.id);
+  const canChat = Boolean(request.selectedProfessionalId && (isClient || isSelectedProvider));
   const reqType = (request as any).requestType ?? "professional_service";
   const TypeIcon = TYPE_ICONS[reqType] ?? Briefcase;
 
@@ -234,6 +237,18 @@ export default function RequestDetail() {
         {request.customerName && (
           <p className="text-xs text-muted-foreground">Posted by: {request.customerName}</p>
         )}
+        {request.customerEmail || request.customerPhone ? (
+          <div className="rounded-xl border border-secondary/20 bg-secondary/5 p-3 text-xs text-secondary">
+            <p className="font-semibold">Private contact details</p>
+            <p className="mt-1">Only the selected provider can view the client’s contact details.</p>
+            {isSelectedProvider && (
+              <div className="mt-2 space-y-0.5 text-foreground">
+                {request.customerPhone && <p>Phone: {request.customerPhone}</p>}
+                {request.customerEmail && <p>Email: {request.customerEmail}</p>}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* Offers section */}
@@ -435,6 +450,12 @@ export default function RequestDetail() {
           )}
         </div>
       )}
+
+      <RequestChat
+        jobId={jobId}
+        customerName={request.customerName}
+        isParticipant={canChat}
+      />
 
       {/* Provider: submit offer */}
       {isProvider && request.status === "open" && !hasSubmittedOffer && (

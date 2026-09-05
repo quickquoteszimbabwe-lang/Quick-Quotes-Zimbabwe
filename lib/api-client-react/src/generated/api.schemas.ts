@@ -28,6 +28,7 @@ export const UserRole = {
 export interface User {
   id: number;
   name: string;
+  publicHandle: string;
   email: string;
   /** @nullable */
   phone?: string | null;
@@ -57,12 +58,15 @@ export interface Professional {
 export interface UserProfile {
   id: number;
   name: string;
+  publicHandle: string;
   email: string;
   /** @nullable */
   phone?: string | null;
   role: string;
   suspended: boolean;
   createdAt: string;
+  /** @nullable */
+  photoUrl?: string | null;
   professional?: Professional;
 }
 
@@ -149,10 +153,16 @@ export interface Job {
   status: JobStatus;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  /** @nullable */
+  selectedProfessionalUserId?: number | null;
   requestType?: JobRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  /** @nullable */
+  customerEmail?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
   photos?: string[];
 }
 
@@ -189,6 +199,8 @@ export interface QuoteDetail {
   id: number;
   jobId: number;
   professionalId: number;
+  /** @nullable */
+  professionalUserId?: number | null;
   price: number;
   timeline: string;
   /** @nullable */
@@ -273,10 +285,16 @@ export interface JobDetail {
   status: string;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  /** @nullable */
+  selectedProfessionalUserId?: number | null;
   requestType?: JobDetailRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  /** @nullable */
+  customerEmail?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
   photos?: string[];
   quotes: QuoteDetail[];
   payment?: Payment;
@@ -399,6 +417,53 @@ export interface UpdateServiceRequest {
   sortOrder?: number;
 }
 
+export interface MessageInput {
+  /**
+   * @minLength 1
+   * @maxLength 2000
+   */
+  body: string;
+}
+
+export type ModerateMessageRequestModerationStatus =
+  (typeof ModerateMessageRequestModerationStatus)[keyof typeof ModerateMessageRequestModerationStatus];
+
+export const ModerateMessageRequestModerationStatus = {
+  visible: "visible",
+  hidden: "hidden",
+} as const;
+
+export interface ModerateMessageRequest {
+  moderationStatus: ModerateMessageRequestModerationStatus;
+}
+
+export type JobMessageModerationStatus =
+  (typeof JobMessageModerationStatus)[keyof typeof JobMessageModerationStatus];
+
+export const JobMessageModerationStatus = {
+  visible: "visible",
+  hidden: "hidden",
+} as const;
+
+export interface JobMessage {
+  id: number;
+  jobId: number;
+  senderId: number;
+  /** @nullable */
+  senderPublicName?: string | null;
+  senderRole: string;
+  /** @nullable */
+  senderPhotoUrl?: string | null;
+  body: string;
+  moderationStatus: JobMessageModerationStatus;
+  createdAt: string;
+}
+
+export type AdminJobMessage = JobMessage & {
+  /** @nullable */
+  requestService?: string | null;
+};
+
 export interface UpdateJobRequest {
   status?: string;
   /** @nullable */
@@ -504,6 +569,18 @@ export type GetJobsParams = {
   limit?: number;
   offset?: number;
 };
+
+export type AdminGetMessagesParams = {
+  status?: AdminGetMessagesStatus;
+};
+
+export type AdminGetMessagesStatus =
+  (typeof AdminGetMessagesStatus)[keyof typeof AdminGetMessagesStatus];
+
+export const AdminGetMessagesStatus = {
+  visible: "visible",
+  hidden: "hidden",
+} as const;
 
 export type GetCategoriesParams = {
   includeInactive?: string;

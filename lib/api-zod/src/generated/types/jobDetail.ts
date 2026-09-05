@@ -22,10 +22,16 @@ export interface JobDetail {
   status: string;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  /** @nullable */
+  selectedProfessionalUserId?: number | null;
   requestType?: JobDetailRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  /** @nullable */
+  customerEmail?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
   photos?: string[];
   quotes: QuoteDetail[];
   payment?: Payment;

@@ -13,6 +13,8 @@ export interface QuoteDetail {
   id: number;
   jobId: number;
   professionalId: number;
+  /** @nullable */
+  professionalUserId?: number | null;
   price: number;
   timeline: string;
   /** @nullable */

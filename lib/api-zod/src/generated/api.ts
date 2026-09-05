@@ -20,6 +20,7 @@ export const HealthCheckResponse = zod.object({
 export const GetMeResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  publicHandle: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
   role: zod.enum(["customer", "professional", "admin"]),
@@ -51,6 +52,7 @@ export const LoginResponse = zod.object({
   user: zod.object({
     id: zod.number(),
     name: zod.string(),
+    publicHandle: zod.string(),
     email: zod.string(),
     phone: zod.string().nullish(),
     role: zod.enum(["customer", "professional", "admin"]),
@@ -72,11 +74,13 @@ export const LogoutResponse = zod.object({
 export const GetProfileResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  publicHandle: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
   role: zod.string(),
   suspended: zod.boolean(),
   createdAt: zod.string(),
+  photoUrl: zod.string().nullish(),
   professional: zod
     .object({
       id: zod.number(),
@@ -104,11 +108,13 @@ export const UpdateProfileBody = zod.object({
 export const UpdateProfileResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  publicHandle: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
   role: zod.string(),
   suspended: zod.boolean(),
   createdAt: zod.string(),
+  photoUrl: zod.string().nullish(),
   professional: zod
     .object({
       id: zod.number(),
@@ -194,11 +200,14 @@ export const GetJobsResponseItem = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
 });
 export const GetJobsResponse = zod.array(GetJobsResponseItem);
@@ -235,17 +244,21 @@ export const GetJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.string(),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
   quotes: zod.array(
     zod.object({
       id: zod.number(),
       jobId: zod.number(),
       professionalId: zod.number(),
+      professionalUserId: zod.number().nullish(),
       price: zod.number(),
       timeline: zod.string(),
       message: zod.string().nullish(),
@@ -338,11 +351,14 @@ export const UpdateJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
 });
 
@@ -367,11 +383,14 @@ export const SelectQuoteResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
 });
 
@@ -392,12 +411,48 @@ export const CompleteJobResponse = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Get the moderated chat for a selected request
+ */
+export const GetJobMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetJobMessagesResponseItem = zod.object({
+  id: zod.number(),
+  jobId: zod.number(),
+  senderId: zod.number(),
+  senderPublicName: zod.string().nullish(),
+  senderRole: zod.string(),
+  senderPhotoUrl: zod.string().nullish(),
+  body: zod.string(),
+  moderationStatus: zod.enum(["visible", "hidden"]),
+  createdAt: zod.string(),
+});
+export const GetJobMessagesResponse = zod.array(GetJobMessagesResponseItem);
+
+/**
+ * @summary Send a message to the selected provider or client
+ */
+export const CreateJobMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const createJobMessageBodyBodyMax = 2000;
+
+export const CreateJobMessageBody = zod.object({
+  body: zod.string().min(1).max(createJobMessageBodyBodyMax),
 });
 
 /**
@@ -575,6 +630,7 @@ export const GetProfessionalReviewsResponse = zod.array(
 export const AdminGetUsersResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
+  publicHandle: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
   role: zod.enum(["customer", "professional", "admin"]),
@@ -627,11 +683,14 @@ export const AdminGetJobsResponseItem = zod.object({
   timeline: zod.string().nullish(),
   status: zod.enum(["open", "in_progress", "completed", "cancelled"]),
   selectedProfessionalId: zod.number().nullish(),
+  selectedProfessionalUserId: zod.number().nullish(),
   requestType: zod
     .enum(["professional_service", "listing_rental", "bookable_service"])
     .optional(),
   createdAt: zod.string(),
   customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
   photos: zod.array(zod.string()).optional(),
 });
 export const AdminGetJobsResponse = zod.array(AdminGetJobsResponseItem);
@@ -669,6 +728,55 @@ export const AdminUpdatePaymentStatusResponse = zod.object({
   method: zod.enum(["ecocash", "bank_transfer", "paynow"]),
   createdAt: zod.string(),
   jobDescription: zod.string().nullish(),
+});
+
+/**
+ * @summary Admin - list chat messages for moderation
+ */
+export const AdminGetMessagesQueryParams = zod.object({
+  status: zod.enum(["visible", "hidden"]).optional(),
+});
+
+export const AdminGetMessagesResponseItem = zod
+  .object({
+    id: zod.number(),
+    jobId: zod.number(),
+    senderId: zod.number(),
+    senderPublicName: zod.string().nullish(),
+    senderRole: zod.string(),
+    senderPhotoUrl: zod.string().nullish(),
+    body: zod.string(),
+    moderationStatus: zod.enum(["visible", "hidden"]),
+    createdAt: zod.string(),
+  })
+  .and(
+    zod.object({
+      requestService: zod.string().nullish(),
+    }),
+  );
+export const AdminGetMessagesResponse = zod.array(AdminGetMessagesResponseItem);
+
+/**
+ * @summary Admin - hide or restore a chat message
+ */
+export const AdminModerateMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminModerateMessageBody = zod.object({
+  moderationStatus: zod.enum(["visible", "hidden"]),
+});
+
+export const AdminModerateMessageResponse = zod.object({
+  id: zod.number(),
+  jobId: zod.number(),
+  senderId: zod.number(),
+  senderPublicName: zod.string().nullish(),
+  senderRole: zod.string(),
+  senderPhotoUrl: zod.string().nullish(),
+  body: zod.string(),
+  moderationStatus: zod.enum(["visible", "hidden"]),
+  createdAt: zod.string(),
 });
 
 /**

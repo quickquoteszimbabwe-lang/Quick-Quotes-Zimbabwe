@@ -2,3 +2,4 @@
 - [QQZ DB Push](qqz-db-push.md) — DB push script is `pnpm --filter @workspace/db run push` (not `db:push`).
 - [Drizzle ANY(ARRAY) bug](drizzle-any-array-pattern.md) — raw sql`ANY(ARRAY[...])` fails at runtime (int/text mismatch); always use `inArray()` instead.
 - [QQZ marketplace boundaries](qqz-marketplace-boundaries.md) — keep future listings/bookings as honest collection states until shared APIs exist; never fabricate inventory.
+- [Safe schema application](safe-schema-application.md) — verify existing tables before applying Drizzle changes; prefer non-destructive database-tool DDL when push prompts about truncation.

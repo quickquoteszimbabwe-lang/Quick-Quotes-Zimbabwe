@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod/v4";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
+import { ensurePublicHandle } from "../lib/public-identity";
 
 const router: IRouter = Router();
 
@@ -40,9 +41,11 @@ router.get("/me", async (req, res) => {
     res.status(401).json({ error: "User not found" });
     return;
   }
+  const publicHandle = await ensurePublicHandle(user.id);
   res.json({
     id: user.id,
     name: user.name,
+    publicHandle,
     email: user.email,
     phone: user.phone,
     role: user.role,
@@ -92,12 +95,14 @@ router.post("/register", async (req, res) => {
     phoneVerified,
   }).returning();
 
+  const publicHandle = await ensurePublicHandle(user.id);
   const token = createToken(user.id, user.role);
   res.status(201).json({
     token,
     user: {
       id: user.id,
       name: user.name,
+      publicHandle,
       email: user.email,
       phone: user.phone,
       role: user.role,
@@ -131,12 +136,14 @@ router.post("/login", async (req, res) => {
     res.status(401).json({ error: "Account suspended" });
     return;
   }
+  const publicHandle = await ensurePublicHandle(user.id);
   const token = createToken(user.id, user.role);
   res.json({
     token,
     user: {
       id: user.id,
       name: user.name,
+      publicHandle,
       email: user.email,
       phone: user.phone,
       role: user.role,

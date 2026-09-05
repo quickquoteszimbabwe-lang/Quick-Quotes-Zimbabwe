@@ -20,9 +20,15 @@ export interface Job {
   status: JobStatus;
   /** @nullable */
   selectedProfessionalId?: number | null;
+  /** @nullable */
+  selectedProfessionalUserId?: number | null;
   requestType?: JobRequestType;
   createdAt: string;
   /** @nullable */
   customerName?: string | null;
+  /** @nullable */
+  customerEmail?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
   photos?: string[];
 }

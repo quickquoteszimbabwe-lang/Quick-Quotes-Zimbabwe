@@ -4,6 +4,7 @@ import { reviewsTable, usersTable, professionalsTable } from "@workspace/db/sche
 import { eq, inArray } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateReviewBody } from "@workspace/api-zod";
+import { ensurePublicHandles } from "../lib/public-identity";
 
 const router: IRouter = Router();
 
@@ -30,7 +31,8 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   await db.update(professionalsTable).set({ rating: String(avgRating.toFixed(2)) })
     .where(eq(professionalsTable.id, parsed.data.professionalId));
 
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
+  const [customer] = await db.select({ publicHandle: usersTable.publicHandle }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? customer?.publicHandle;
   res.status(201).json({
     id: review.id,
     jobId: review.jobId,
@@ -39,7 +41,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     rating: review.rating,
     comment: review.comment,
     createdAt: review.createdAt.toISOString(),
-    customerName: customer?.name ?? null,
+    customerName: publicHandle ?? null,
   });
 });
 
@@ -49,10 +51,10 @@ router.get("/professional/:professionalId", requireAuth, async (req: AuthRequest
 
   const customerIds = [...new Set(reviews.map(r => r.customerId))];
   const customers = customerIds.length > 0
-    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable)
+    ? await db.select({ id: usersTable.id, publicHandle: usersTable.publicHandle }).from(usersTable)
         .where(inArray(usersTable.id, customerIds))
     : [];
-  const customerMap = new Map(customers.map(c => [c.id, c.name]));
+  const publicHandles = await ensurePublicHandles(customerIds);
 
   res.json(reviews.map(r => ({
     id: r.id,
@@ -62,7 +64,7 @@ router.get("/professional/:professionalId", requireAuth, async (req: AuthRequest
     rating: r.rating,
     comment: r.comment,
     createdAt: r.createdAt.toISOString(),
-    customerName: customerMap.get(r.customerId) ?? null,
+    customerName: publicHandles.get(r.customerId) ?? customers.find(c => c.id === r.customerId)?.publicHandle ?? null,
   })));
 });
 

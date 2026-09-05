@@ -10,11 +10,14 @@ import type { Professional } from "./professional";
 export interface UserProfile {
   id: number;
   name: string;
+  publicHandle: string;
   email: string;
   /** @nullable */
   phone?: string | null;
   role: string;
   suspended: boolean;
   createdAt: string;
+  /** @nullable */
+  photoUrl?: string | null;
   professional?: Professional;
 }

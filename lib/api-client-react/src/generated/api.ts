@@ -17,6 +17,8 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AdminGetMessagesParams,
+  AdminJobMessage,
   AuthResponse,
   Category,
   CategoryTreeNode,
@@ -36,8 +38,11 @@ import type {
   HealthStatus,
   Job,
   JobDetail,
+  JobMessage,
   LoginRequest,
+  MessageInput,
   MessageResponse,
+  ModerateMessageRequest,
   Payment,
   Professional,
   Quote,
@@ -1374,6 +1379,180 @@ export const useCompleteJob = <
 };
 
 /**
+ * @summary Get the moderated chat for a selected request
+ */
+export const getGetJobMessagesUrl = (id: number) => {
+  return `/api/jobs/${id}/messages`;
+};
+
+export const getJobMessages = async (
+  id: number,
+  options?: RequestInit,
+): Promise<JobMessage[]> => {
+  return customFetch<JobMessage[]>(getGetJobMessagesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJobMessagesQueryKey = (id: number) => {
+  return [`/api/jobs/${id}/messages`] as const;
+};
+
+export const getGetJobMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJobMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJobMessagesQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobMessages>>> = ({
+    signal,
+  }) => getJobMessages(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJobMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJobMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJobMessages>>
+>;
+export type GetJobMessagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the moderated chat for a selected request
+ */
+
+export function useGetJobMessages<
+  TData = Awaited<ReturnType<typeof getJobMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJobMessagesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a message to the selected provider or client
+ */
+export const getCreateJobMessageUrl = (id: number) => {
+  return `/api/jobs/${id}/messages`;
+};
+
+export const createJobMessage = async (
+  id: number,
+  messageInput: MessageInput,
+  options?: RequestInit,
+): Promise<JobMessage> => {
+  return customFetch<JobMessage>(getCreateJobMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(messageInput),
+  });
+};
+
+export const getCreateJobMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createJobMessage>>,
+    TError,
+    { id: number; data: BodyType<MessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createJobMessage>>,
+  TError,
+  { id: number; data: BodyType<MessageInput> },
+  TContext
+> => {
+  const mutationKey = ["createJobMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createJobMessage>>,
+    { id: number; data: BodyType<MessageInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createJobMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateJobMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createJobMessage>>
+>;
+export type CreateJobMessageMutationBody = BodyType<MessageInput>;
+export type CreateJobMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a message to the selected provider or client
+ */
+export const useCreateJobMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createJobMessage>>,
+    TError,
+    { id: number; data: BodyType<MessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createJobMessage>>,
+  TError,
+  { id: number; data: BodyType<MessageInput> },
+  TContext
+> => {
+  return useMutation(getCreateJobMessageMutationOptions(options));
+};
+
+/**
  * @summary Professional submits a quote
  */
 export const getCreateQuoteUrl = () => {
@@ -2434,6 +2613,190 @@ export const useAdminUpdatePaymentStatus = <
   TContext
 > => {
   return useMutation(getAdminUpdatePaymentStatusMutationOptions(options));
+};
+
+/**
+ * @summary Admin - list chat messages for moderation
+ */
+export const getAdminGetMessagesUrl = (params?: AdminGetMessagesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/messages?${stringifiedParams}`
+    : `/api/admin/messages`;
+};
+
+export const adminGetMessages = async (
+  params?: AdminGetMessagesParams,
+  options?: RequestInit,
+): Promise<AdminJobMessage[]> => {
+  return customFetch<AdminJobMessage[]>(getAdminGetMessagesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminGetMessagesQueryKey = (
+  params?: AdminGetMessagesParams,
+) => {
+  return [`/api/admin/messages`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminGetMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AdminGetMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminGetMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminGetMessagesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminGetMessages>>
+  > = ({ signal }) => adminGetMessages(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetMessages>>
+>;
+export type AdminGetMessagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - list chat messages for moderation
+ */
+
+export function useAdminGetMessages<
+  TData = Awaited<ReturnType<typeof adminGetMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AdminGetMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminGetMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetMessagesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin - hide or restore a chat message
+ */
+export const getAdminModerateMessageUrl = (id: number) => {
+  return `/api/admin/messages/${id}`;
+};
+
+export const adminModerateMessage = async (
+  id: number,
+  moderateMessageRequest: ModerateMessageRequest,
+  options?: RequestInit,
+): Promise<JobMessage> => {
+  return customFetch<JobMessage>(getAdminModerateMessageUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(moderateMessageRequest),
+  });
+};
+
+export const getAdminModerateMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerateMessage>>,
+    TError,
+    { id: number; data: BodyType<ModerateMessageRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerateMessage>>,
+  TError,
+  { id: number; data: BodyType<ModerateMessageRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminModerateMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerateMessage>>,
+    { id: number; data: BodyType<ModerateMessageRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminModerateMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerateMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerateMessage>>
+>;
+export type AdminModerateMessageMutationBody = BodyType<ModerateMessageRequest>;
+export type AdminModerateMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - hide or restore a chat message
+ */
+export const useAdminModerateMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerateMessage>>,
+    TError,
+    { id: number; data: BodyType<ModerateMessageRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerateMessage>>,
+  TError,
+  { id: number; data: BodyType<ModerateMessageRequest> },
+  TContext
+> => {
+  return useMutation(getAdminModerateMessageMutationOptions(options));
 };
 
 /**

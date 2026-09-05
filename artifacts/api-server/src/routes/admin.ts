@@ -1,9 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable } from "@workspace/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable, jobMessagesTable } from "@workspace/db/schema";
+import { eq, asc, desc, inArray } from "drizzle-orm";
 import { requireAuth, requireRole, AuthRequest } from "../middlewares/auth";
-import { UpdatePaymentStatusBody } from "@workspace/api-zod";
+import { AdminModerateMessageBody, UpdatePaymentStatusBody } from "@workspace/api-zod";
+import { ensurePublicHandles } from "../lib/public-identity";
+import { getFacePhotoMap } from "../lib/photo";
 
 const router: IRouter = Router();
 
@@ -276,6 +278,70 @@ router.patch("/payments/:id/status", async (req, res) => {
     method: payment.method as "ecocash" | "bank_transfer" | "paynow",
     createdAt: payment.createdAt.toISOString(),
     jobDescription: null,
+  });
+});
+
+router.get("/messages", async (req, res) => {
+  const status = typeof req.query.status === "string" ? req.query.status : undefined;
+  const conditions = status === "visible" || status === "hidden"
+    ? [eq(jobMessagesTable.moderationStatus, status)]
+    : [];
+  const messages = await db
+    .select()
+    .from(jobMessagesTable)
+    .where(conditions.length ? conditions[0] : undefined)
+    .orderBy(desc(jobMessagesTable.createdAt));
+
+  const senderIds = [...new Set(messages.map(message => message.senderId))];
+  const jobIds = [...new Set(messages.map(message => message.jobId))];
+  const users = senderIds.length > 0
+    ? await db.select({ id: usersTable.id, publicHandle: usersTable.publicHandle, role: usersTable.role }).from(usersTable).where(inArray(usersTable.id, senderIds))
+    : [];
+  const jobs = jobIds.length > 0
+    ? await db.select({ id: jobsTable.id, service: jobsTable.service }).from(jobsTable).where(inArray(jobsTable.id, jobIds))
+    : [];
+  const handles = await ensurePublicHandles(senderIds);
+  const photos = await getFacePhotoMap(senderIds);
+  const userMap = new Map(users.map(user => [user.id, user]));
+  const jobMap = new Map(jobs.map(job => [job.id, job.service]));
+
+  res.json(messages.map(message => ({
+    id: message.id,
+    jobId: message.jobId,
+    senderId: message.senderId,
+    senderPublicName: handles.get(message.senderId) ?? userMap.get(message.senderId)?.publicHandle ?? null,
+    senderRole: userMap.get(message.senderId)?.role ?? "customer",
+    senderPhotoUrl: photos.get(message.senderId) ?? null,
+    body: message.body,
+    moderationStatus: message.moderationStatus as "visible" | "hidden",
+    requestService: jobMap.get(message.jobId) ?? null,
+    createdAt: message.createdAt.toISOString(),
+  })));
+});
+
+router.patch("/messages/:id", async (req: AuthRequest, res) => {
+  const messageId = parseInt(req.params.id);
+  const parsed = AdminModerateMessageBody.safeParse(req.body);
+  if (!Number.isInteger(messageId) || !parsed.success) {
+    res.status(400).json({ error: "Invalid moderation request" });
+    return;
+  }
+  const [message] = await db.update(jobMessagesTable).set({
+    moderationStatus: parsed.data.moderationStatus,
+    moderatedBy: req.user!.userId,
+    moderatedAt: new Date(),
+  }).where(eq(jobMessagesTable.id, messageId)).returning();
+  if (!message) {
+    res.status(404).json({ error: "Message not found" });
+    return;
+  }
+  res.json({
+    id: message.id,
+    jobId: message.jobId,
+    senderId: message.senderId,
+    body: message.body,
+    moderationStatus: message.moderationStatus as "visible" | "hidden",
+    createdAt: message.createdAt.toISOString(),
   });
 });
 

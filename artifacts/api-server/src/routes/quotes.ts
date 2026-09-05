@@ -5,6 +5,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateQuoteBody } from "@workspace/api-zod";
 import { getFacePhotoForUser } from "../lib/photo";
+import { ensurePublicHandles } from "../lib/public-identity";
 
 const router: IRouter = Router();
 
@@ -82,7 +83,8 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     notes: body.notes ?? null,
   }).returning();
 
-  const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
+  const [user] = await db.select({ publicHandle: usersTable.publicHandle }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? user?.publicHandle;
   const photoUrl = await getFacePhotoForUser(userId);
 
   res.status(201).json({
@@ -101,7 +103,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     milestones: quote.milestones ?? [],
     notes: quote.notes ?? null,
     createdAt: quote.createdAt.toISOString(),
-    professionalName: user?.name ?? null,
+    professionalName: publicHandle ?? null,
     professionalRating: prof.rating ? Number(prof.rating) : null,
     professionalPhotoUrl: photoUrl,
     professionalExperience: prof.experience ?? null,
@@ -123,7 +125,8 @@ router.get("/my", requireAuth, async (req: AuthRequest, res) => {
     : [];
   const jobMap = new Map(jobs.map(j => [j.id, j.description]));
 
-  const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
+  const [user] = await db.select({ publicHandle: usersTable.publicHandle }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? user?.publicHandle;
   const photoUrl = await getFacePhotoForUser(userId);
 
   res.json(quotes.map(q => ({
@@ -142,7 +145,7 @@ router.get("/my", requireAuth, async (req: AuthRequest, res) => {
     milestones: q.milestones ?? [],
     notes: q.notes ?? null,
     createdAt: q.createdAt.toISOString(),
-    professionalName: user?.name ?? null,
+    professionalName: publicHandle ?? null,
     professionalRating: prof.rating ? Number(prof.rating) : null,
     professionalPhotoUrl: photoUrl,
     professionalExperience: prof.experience ?? null,
