@@ -562,6 +562,30 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Payment"
+  /admin/payments/{id}/status:
+    patch:
+      operationId: adminUpdatePaymentStatus
+      tags: [admin]
+      summary: Admin - verify or release a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePaymentStatusRequest"
+      responses:
+        "200":
+          description: Updated payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
 
   /categories:
     get:

@@ -2349,6 +2349,94 @@ export function useAdminGetPayments<
 }
 
 /**
+ * @summary Admin - verify or release a payment
+ */
+export const getAdminUpdatePaymentStatusUrl = (id: number) => {
+  return `/api/admin/payments/${id}/status`;
+};
+
+export const adminUpdatePaymentStatus = async (
+  id: number,
+  updatePaymentStatusRequest: UpdatePaymentStatusRequest,
+  options?: RequestInit,
+): Promise<Payment> => {
+  return customFetch<Payment>(getAdminUpdatePaymentStatusUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePaymentStatusRequest),
+  });
+};
+
+export const getAdminUpdatePaymentStatusMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdatePaymentStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdatePaymentStatusRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdatePaymentStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdatePaymentStatusRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdatePaymentStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdatePaymentStatus>>,
+    { id: number; data: BodyType<UpdatePaymentStatusRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUpdatePaymentStatus(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdatePaymentStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdatePaymentStatus>>
+>;
+export type AdminUpdatePaymentStatusMutationBody =
+  BodyType<UpdatePaymentStatusRequest>;
+export type AdminUpdatePaymentStatusMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - verify or release a payment
+ */
+export const useAdminUpdatePaymentStatus = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdatePaymentStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdatePaymentStatusRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdatePaymentStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdatePaymentStatusRequest> },
+  TContext
+> => {
+  return useMutation(getAdminUpdatePaymentStatusMutationOptions(options));
+};
+
+/**
  * @summary List active categories
  */
 export const getGetCategoriesUrl = (params?: GetCategoriesParams) => {

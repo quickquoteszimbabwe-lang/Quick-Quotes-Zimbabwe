@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Home, FileText, CreditCard, User, Shield, Send, LayoutGrid, LogOut, Plus, BadgeCheck, Search, Sun, Moon, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRole } from "@/lib/pricingModels";
@@ -18,6 +19,7 @@ const baseNav = [
 
 export function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
   const [location, navigate] = useLocation();
   const [dark, setDark] = useState(() => localStorage.getItem("qqz-theme") === "dark");
   const navItems = [...baseNav];
@@ -30,7 +32,18 @@ export function Layout({ children }: LayoutProps) {
     localStorage.setItem("qqz-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  function handleLogout() { logout(); navigate("/"); }
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("qqz_token") ?? ""}` },
+      });
+    } finally {
+      queryClient.clear();
+      logout();
+      navigate("/");
+    }
+  }
 
   return (
     <div className="qqz-shell min-h-[100dvh] flex flex-col md:flex-row">
@@ -64,7 +77,7 @@ export function Layout({ children }: LayoutProps) {
               <div data-testid="text-sidebar-username" className="text-sm font-semibold truncate">{user?.name}</div>
               <div className="text-[11px] text-sidebar-foreground/50 capitalize">{formatRole(user?.role ?? "")}</div>
             </div>
-            <button onClick={handleLogout} data-testid="button-sidebar-logout" aria-label="Log out" className="ml-auto text-sidebar-foreground/45 hover:text-accent"><LogOut size={16} /></button>
+            <button type="button" onClick={handleLogout} data-testid="button-sidebar-logout" aria-label="Log out" className="ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-sidebar-foreground/60 hover:bg-sidebar-foreground/10 hover:text-accent"><LogOut size={16} /><span>Log out</span></button>
           </div>
           {user?.role === "professional" && <Link href="/verify" data-testid="link-verification" className="mt-3 flex items-center gap-2 text-[11px] text-accent/90"><BadgeCheck size={14} /> Complete verification</Link>}
         </div>
@@ -83,6 +96,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex items-center gap-3">
               <Link href="/discover" data-testid="link-header-discover" className="hidden sm:flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"><Search size={14} /> Search marketplace</Link>
+              <button type="button" onClick={handleLogout} data-testid="button-mobile-logout" aria-label="Log out" className="md:hidden text-muted-foreground hover:text-destructive transition-colors"><LogOut size={17} /></button>
               <button onClick={() => setDark((value) => !value)} data-testid="button-toggle-theme" aria-label="Toggle theme" className="text-muted-foreground hover:text-primary transition-colors">{dark ? <Sun size={17} /> : <Moon size={17} />}</button>
               <Link href="/notifications" data-testid="link-header-notifications" aria-label="Notifications" className="text-muted-foreground hover:text-primary transition-colors"><Bell size={17} /></Link>
               <Link href="/verify" data-testid="link-header-verify" className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-secondary hover:text-primary transition-colors"><BadgeCheck size={15} /> Verified matters</Link>
