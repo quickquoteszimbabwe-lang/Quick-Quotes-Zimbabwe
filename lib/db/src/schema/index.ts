@@ -10,3 +10,4 @@ export * from "./categories";
 export * from "./subcategories";
 export * from "./services";
 export * from "./job-photos";
+export * from "./job-messages";

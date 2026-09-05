@@ -348,6 +348,50 @@ paths:
               schema:
                 $ref: "#/components/schemas/Job"
 
+  /jobs/{id}/messages:
+    get:
+      operationId: getJobMessages
+      tags: [jobs]
+      summary: Get the moderated chat for a selected request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request chat messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobMessage"
+    post:
+      operationId: createJobMessage
+      tags: [jobs]
+      summary: Send a message to the selected provider or client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobMessage"
+
   /quotes:
     post:
       operationId: createQuote
@@ -586,6 +630,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Payment"
+
+  /admin/messages:
+    get:
+      operationId: adminGetMessages
+      tags: [admin]
+      summary: Admin - list chat messages for moderation
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [visible, hidden]
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminJobMessage"
+
+  /admin/messages/{id}:
+    patch:
+      operationId: adminModerateMessage
+      tags: [admin]
+      summary: Admin - hide or restore a chat message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerateMessageRequest"
+      responses:
+        "200":
+          description: Moderated message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobMessage"
 
   /categories:
     get:
@@ -914,6 +1004,8 @@ components:
           type: integer
         name:
           type: string
+        publicHandle:
+          type: string
         email:
           type: string
         phone:
@@ -928,6 +1020,7 @@ components:
       required:
         - id
         - name
+        - publicHandle
         - email
         - role
         - suspended
@@ -940,6 +1033,8 @@ components:
           type: integer
         name:
           type: string
+        publicHandle:
+          type: string
         email:
           type: string
         phone:
@@ -950,11 +1045,14 @@ components:
           type: boolean
         createdAt:
           type: string
+        photoUrl:
+          type: ["string", "null"]
         professional:
           $ref: "#/components/schemas/Professional"
       required:
         - id
         - name
+        - publicHandle
         - email
         - role
         - suspended
@@ -1094,12 +1192,18 @@ components:
           enum: [open, in_progress, completed, cancelled]
         selectedProfessionalId:
           type: ["integer", "null"]
+        selectedProfessionalUserId:
+          type: ["integer", "null"]
         requestType:
           type: string
           enum: [professional_service, listing_rental, bookable_service]
         createdAt:
           type: string
         customerName:
+          type: ["string", "null"]
+        customerEmail:
+          type: ["string", "null"]
+        customerPhone:
           type: ["string", "null"]
         photos:
           type: array
@@ -1136,12 +1240,18 @@ components:
           type: string
         selectedProfessionalId:
           type: ["integer", "null"]
+        selectedProfessionalUserId:
+          type: ["integer", "null"]
         requestType:
           type: string
           enum: [professional_service, listing_rental, bookable_service]
         createdAt:
           type: string
         customerName:
+          type: ["string", "null"]
+        customerEmail:
+          type: ["string", "null"]
+        customerPhone:
           type: ["string", "null"]
         photos:
           type: array
@@ -1394,6 +1504,64 @@ components:
         sortOrder:
           type: integer
 
+    MessageInput:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+        - body
+
+    ModerateMessageRequest:
+      type: object
+      properties:
+        moderationStatus:
+          type: string
+          enum: [visible, hidden]
+      required:
+        - moderationStatus
+
+    JobMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        senderId:
+          type: integer
+        senderPublicName:
+          type: ["string", "null"]
+        senderRole:
+          type: string
+        senderPhotoUrl:
+          type: ["string", "null"]
+        body:
+          type: string
+        moderationStatus:
+          type: string
+          enum: [visible, hidden]
+        createdAt:
+          type: string
+      required:
+        - id
+        - jobId
+        - senderId
+        - senderRole
+        - body
+        - moderationStatus
+        - createdAt
+
+    AdminJobMessage:
+      allOf:
+        - $ref: "#/components/schemas/JobMessage"
+        - type: object
+          properties:
+            requestService:
+              type: ["string", "null"]
+
     UpdateJobRequest:
       type: object
       properties:
@@ -1517,6 +1685,8 @@ components:
           type: integer
         professionalId:
           type: integer
+        professionalUserId:
+          type: ["integer", "null"]
         price:
           type: number
         timeline:

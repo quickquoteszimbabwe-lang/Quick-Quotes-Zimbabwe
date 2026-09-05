@@ -9,6 +9,7 @@ import reviewsRouter from "./reviews";
 import adminRouter from "./admin";
 import verificationRouter from "./verification";
 import servicesRouter from "./services";
+import messagesRouter from "./messages";
 
 const router: IRouter = Router();
 
@@ -16,6 +17,7 @@ router.use(healthRouter);
 router.use("/auth", authRouter);
 router.use("/users", usersRouter);
 router.use("/jobs", jobsRouter);
+router.use("/jobs", messagesRouter);
 router.use("/quotes", quotesRouter);
 router.use("/payments", paymentsRouter);
 router.use("/reviews", reviewsRouter);

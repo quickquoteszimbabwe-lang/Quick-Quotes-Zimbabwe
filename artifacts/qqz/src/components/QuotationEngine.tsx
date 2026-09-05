@@ -8,12 +8,13 @@
 import { useState } from "react";
 import {
   Plus, Trash2, AlertCircle, CheckCircle,
-  Star, User as UserIcon, ChevronDown, ChevronUp,
+  Star, ChevronDown, ChevronUp,
   Milestone, Tag, StickyNote, Percent, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { PRICING_MODELS, getPricingModel } from "@/lib/pricingModels";
+import { UserAvatar } from "@/components/UserAvatar";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared types
@@ -613,14 +614,11 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
       {/* Provider header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          {quote.professionalPhotoUrl ? (
-            <img src={quote.professionalPhotoUrl} alt={quote.professionalName ?? "Provider"}
-              className="w-11 h-11 rounded-full object-cover border border-border shrink-0" />
-          ) : (
-            <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <UserIcon size={18} className="text-primary" />
-            </div>
-          )}
+          <UserAvatar
+            name={quote.professionalName}
+            photoUrl={quote.professionalPhotoUrl}
+            size="md"
+          />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-foreground">{quote.professionalName ?? "Provider"}</span>

@@ -5,23 +5,48 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateJobBody, UpdateJobBody, SelectQuoteBody } from "@workspace/api-zod";
 import { getFacePhotoMap, insertJobPhotos, getJobPhotos } from "../lib/photo";
+import { ensurePublicHandles } from "../lib/public-identity";
 
 const router: IRouter = Router();
 
-function formatRequest(job: typeof jobsTable.$inferSelect, clientName?: string | null, photos?: string[]) {
+type RequestViewer = { userId: number; role: string; professionalId?: number };
+type RequestCustomer = {
+  publicHandle?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+function canViewLocation(job: typeof jobsTable.$inferSelect, viewer: RequestViewer) {
+  return viewer.role === "admin" || viewer.userId === job.customerId || viewer.professionalId === job.selectedProfessionalId;
+}
+
+function canViewContact(job: typeof jobsTable.$inferSelect, viewer: RequestViewer) {
+  return viewer.role === "admin" || viewer.professionalId === job.selectedProfessionalId;
+}
+
+function formatRequest(
+  job: typeof jobsTable.$inferSelect,
+  customer?: RequestCustomer,
+  photos?: string[],
+  viewer?: RequestViewer,
+) {
+  const locationVisible = viewer ? canViewLocation(job, viewer) : false;
+  const contactVisible = viewer ? canViewContact(job, viewer) : false;
   return {
     id: job.id,
     customerId: job.customerId,
     category: job.category,
     service: job.service,
     description: job.description,
-    location: job.location,
+    location: locationVisible ? job.location : "Shared after a provider is selected",
     timeline: job.timeline,
     status: job.status,
     selectedProfessionalId: job.selectedProfessionalId,
     requestType: job.requestType ?? "professional_service",
     createdAt: job.createdAt.toISOString(),
-    customerName: clientName ?? null,
+    customerName: customer?.publicHandle ?? null,
+    customerEmail: contactVisible ? customer?.email ?? null : null,
+    customerPhone: contactVisible ? customer?.phone ?? null : null,
     photos: photos ?? [],
   };
 }
@@ -48,11 +73,16 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
 
   const customerIds = [...new Set(jobs.map(j => j.customerId))];
   const customers = customerIds.length > 0
-    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(inArray(usersTable.id, customerIds))
+    ? await db.select({ id: usersTable.id, publicHandle: usersTable.publicHandle }).from(usersTable).where(inArray(usersTable.id, customerIds))
     : [];
-  const customerMap = new Map(customers.map(c => [c.id, c.name]));
+  const publicHandles = await ensurePublicHandles(customerIds);
 
-  res.json(jobs.map(j => formatRequest(j, customerMap.get(j.customerId))));
+  res.json(jobs.map(j => formatRequest(
+    j,
+    { publicHandle: publicHandles.get(j.customerId) ?? customers.find(c => c.id === j.customerId)?.publicHandle },
+    undefined,
+    { userId, role },
+  )));
 });
 
 router.post("/", requireAuth, async (req: AuthRequest, res) => {
@@ -82,8 +112,9 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   }
   const photos = await getJobPhotos(job.id);
 
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.status(201).json(formatRequest(job, customer?.name, photos));
+  const [customer] = await db.select({ publicHandle: usersTable.publicHandle }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? customer?.publicHandle;
+  res.status(201).json(formatRequest(job, { publicHandle }, photos, req.user!));
 });
 
 router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -93,8 +124,17 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
     res.status(404).json({ error: "Request not found" });
     return;
   }
+  const [viewerProfessional] = req.user!.role === "professional"
+    ? await db.select({ id: professionalsTable.id }).from(professionalsTable).where(eq(professionalsTable.userId, req.user!.userId))
+    : [];
+  const viewer = { ...req.user!, professionalId: viewerProfessional?.id };
 
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, job.customerId));
+  const [customer] = await db.select({
+    publicHandle: usersTable.publicHandle,
+    email: usersTable.email,
+    phone: usersTable.phone,
+  }).from(usersTable).where(eq(usersTable.id, job.customerId));
+  const customerHandle = (await ensurePublicHandles([job.customerId])).get(job.customerId) ?? customer?.publicHandle;
 
   const quotes = await db.select().from(quotesTable).where(eq(quotesTable.jobId, jobId));
   const professionalIds = [...new Set(quotes.map(q => q.professionalId))];
@@ -110,14 +150,20 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
     : [];
   const professionalUserIds = professionals.map(p => p.userId);
   const professionalUsers = professionalUserIds.length > 0
-    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(inArray(usersTable.id, professionalUserIds))
+    ? await db.select({ id: usersTable.id, publicHandle: usersTable.publicHandle }).from(usersTable).where(inArray(usersTable.id, professionalUserIds))
     : [];
+  const professionalHandles = await ensurePublicHandles(professionalUserIds);
   const photoMap = await getFacePhotoMap(professionalUserIds);
-  const profMap = new Map(professionals.map(p => [p.id, { ...p, name: professionalUsers.find(u => u.id === p.userId)?.name, photoUrl: photoMap.get(p.userId) ?? null }]));
+  const profMap = new Map(professionals.map(p => [p.id, {
+    ...p,
+    name: professionalHandles.get(p.userId) ?? professionalUsers.find(u => u.id === p.userId)?.publicHandle,
+    photoUrl: photoMap.get(p.userId) ?? null,
+  }]));
+  const selectedProfessionalUserId = professionals.find(p => p.id === job.selectedProfessionalId)?.userId ?? null;
 
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.jobId, jobId));
   const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.jobId, jobId));
-  const reviewCustomer = review ? await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, review.customerId)) : [];
+  const reviewCustomer = review ? await db.select({ publicHandle: usersTable.publicHandle }).from(usersTable).where(eq(usersTable.id, review.customerId)) : [];
   const photos = await getJobPhotos(jobId);
 
   res.json({
@@ -126,13 +172,16 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
     category: job.category,
     service: job.service,
     description: job.description,
-    location: job.location,
+    location: canViewLocation(job, viewer) ? job.location : "Shared after a provider is selected",
     timeline: job.timeline,
     status: job.status,
     selectedProfessionalId: job.selectedProfessionalId,
+    selectedProfessionalUserId,
     requestType: job.requestType ?? "professional_service",
     createdAt: job.createdAt.toISOString(),
-    customerName: customer?.name ?? null,
+    customerName: customerHandle ?? null,
+    customerEmail: canViewContact(job, viewer) ? customer?.email ?? null : null,
+    customerPhone: canViewContact(job, viewer) ? customer?.phone ?? null : null,
     photos,
     quotes: quotes.map(q => {
       const prof = profMap.get(q.professionalId);
@@ -140,6 +189,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
         id: q.id,
         jobId: q.jobId,
         professionalId: q.professionalId,
+        professionalUserId: prof?.userId ?? null,
         price: Number(q.price),
         timeline: q.timeline,
         message: q.message,
@@ -176,7 +226,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt.toISOString(),
-      customerName: reviewCustomer[0]?.name ?? null,
+      customerName: reviewCustomer[0]?.publicHandle ?? null,
     } : undefined,
   });
 });
@@ -193,8 +243,13 @@ router.patch("/:id", requireAuth, async (req: AuthRequest, res) => {
   if (parsed.data.progressNote !== undefined) updates.progressNote = parsed.data.progressNote;
 
   const [job] = await db.update(jobsTable).set(updates).where(eq(jobsTable.id, jobId)).returning();
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, job.customerId));
-  res.json(formatRequest(job, customer?.name));
+  const [customer] = await db.select({
+    publicHandle: usersTable.publicHandle,
+    email: usersTable.email,
+    phone: usersTable.phone,
+  }).from(usersTable).where(eq(usersTable.id, job.customerId));
+  const publicHandle = (await ensurePublicHandles([job.customerId])).get(job.customerId) ?? customer?.publicHandle;
+  res.json(formatRequest(job, { publicHandle, email: customer?.email, phone: customer?.phone }, undefined, req.user!));
 });
 
 router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
@@ -223,8 +278,13 @@ router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
     status: "in_progress",
   }).where(eq(jobsTable.id, jobId)).returning();
 
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.json(formatRequest(updated, customer?.name));
+  const [customer] = await db.select({
+    publicHandle: usersTable.publicHandle,
+    email: usersTable.email,
+    phone: usersTable.phone,
+  }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? customer?.publicHandle;
+  res.json(formatRequest(updated, { publicHandle, email: customer?.email, phone: customer?.phone }, undefined, req.user!));
 });
 
 router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
@@ -244,8 +304,13 @@ router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
     }).where(eq(professionalsTable.id, job.selectedProfessionalId));
   }
 
-  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId));
-  res.json(formatRequest(updated, customer?.name));
+  const [customer] = await db.select({
+    publicHandle: usersTable.publicHandle,
+    email: usersTable.email,
+    phone: usersTable.phone,
+  }).from(usersTable).where(eq(usersTable.id, userId));
+  const publicHandle = (await ensurePublicHandles([userId])).get(userId) ?? customer?.publicHandle;
+  res.json(formatRequest(updated, { publicHandle, email: customer?.email, phone: customer?.phone }, undefined, req.user!));
 });
 
 export default router;

@@ -6,6 +6,7 @@ import {
   useAdminCreateCategory, useAdminUpdateCategory, useAdminDeleteCategory,
   useAdminCreateSubcategory, useAdminUpdateSubcategory, useAdminDeleteSubcategory,
   useAdminCreateService, useAdminUpdateService, useAdminDeleteService,
+  useAdminGetMessages, useAdminModerateMessage,
 } from "@workspace/api-client-react";
 import type { Category, Subcategory, Service } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,12 +14,13 @@ import {
   getAdminGetUsersQueryKey, getAdminGetJobsQueryKey,
   getAdminGetPaymentsQueryKey,
   getAdminGetCategoriesQueryKey, getAdminGetSubcategoriesQueryKey, getAdminGetServicesQueryKey,
+  getAdminGetMessagesQueryKey,
 } from "@workspace/api-client-react";
-import { Users, Briefcase, CreditCard, CheckCircle, Ban, ShieldCheck, RotateCcw, Tags, Plus, Pencil, Trash2, X, Star } from "lucide-react";
+import { Users, Briefcase, CreditCard, CheckCircle, Ban, ShieldCheck, RotateCcw, Tags, Plus, Pencil, Trash2, X, Star, MessageCircle } from "lucide-react";
 import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-type Tab = "users" | "jobs" | "payments" | "services";
+type Tab = "users" | "jobs" | "payments" | "messages" | "services";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("users");
@@ -27,11 +29,14 @@ export default function Admin() {
   const { data: users } = useAdminGetUsers();
   const { data: jobs } = useAdminGetJobs();
   const { data: payments } = useAdminGetPayments();
+  const { data: messages } = useAdminGetMessages();
 
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: getAdminGetUsersQueryKey() });
   const invalidatePayments = () => queryClient.invalidateQueries({ queryKey: getAdminGetPaymentsQueryKey() });
+  const invalidateMessages = () => queryClient.invalidateQueries({ queryKey: getAdminGetMessagesQueryKey() });
   const suspendUser = useAdminSuspendUser({ mutation: { onSuccess: invalidateUsers } });
   const approveProf = useAdminApproveProfessional({ mutation: { onSuccess: invalidateUsers } });
+  const moderateMessage = useAdminModerateMessage({ mutation: { onSuccess: invalidateMessages } });
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const updatePaymentStatus = useAdminUpdatePaymentStatus({
     mutation: {
@@ -47,7 +52,7 @@ export default function Admin() {
     <div className="space-y-4">
       <div className="bg-primary text-white rounded-2xl p-4">
         <h1 className="text-xl font-bold">Admin Panel</h1>
-         <p className="text-sm text-white/70">Manage users, requests, payments, and services</p>
+        <p className="text-sm text-white/70">Manage users, requests, payments, chat, and services</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -57,7 +62,7 @@ export default function Admin() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-         {(["users", "jobs", "payments", "services"] as Tab[]).map(t => (
+         {(["users", "jobs", "payments", "messages", "services"] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -66,7 +71,7 @@ export default function Admin() {
               tab === t ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground hover:border-primary/40"
             )}
           >
-             {t === "jobs" ? "requests" : t}
+             {t === "jobs" ? "requests" : t === "messages" ? "chat" : t}
           </button>
         ))}
       </div>
@@ -189,6 +194,55 @@ export default function Admin() {
                   )}
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "messages" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
+            <MessageCircle size={16} />
+            Review participant chat here. Hiding a message removes it from both participant views.
+          </div>
+          {messages?.length === 0 && (
+            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+              No chat messages have been sent.
+            </div>
+          )}
+          {messages?.map(message => (
+            <div key={message.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{message.senderPublicName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {message.senderRole} · {message.requestService || `Request #${message.jobId}`} · {formatDate(message.createdAt)}
+                  </p>
+                </div>
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  message.moderationStatus === "visible" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700",
+                )}>
+                  {message.moderationStatus}
+                </span>
+              </div>
+              <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm text-foreground">{message.body}</p>
+              <button
+                type="button"
+                onClick={() => moderateMessage.mutate({
+                  id: message.id,
+                  data: { moderationStatus: message.moderationStatus === "visible" ? "hidden" : "visible" },
+                })}
+                disabled={moderateMessage.isPending}
+                className={cn(
+                  "mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50",
+                  message.moderationStatus === "visible"
+                    ? "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100",
+                )}
+              >
+                {message.moderationStatus === "visible" ? "Hide message" : "Restore message"}
+              </button>
             </div>
           ))}
         </div>

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { UpdateProfileBody, CreateProfessionalProfileBody, UpdateProfessionalProfileBody } from "@workspace/api-zod";
 import { getFacePhotoForUser } from "../lib/photo";
+import { ensurePublicHandle } from "../lib/public-identity";
 
 const router: IRouter = Router();
 
@@ -16,10 +17,12 @@ router.get("/profile", requireAuth, async (req: AuthRequest, res) => {
     return;
   }
   const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
-  const photoUrl = prof ? await getFacePhotoForUser(userId) : null;
+  const photoUrl = await getFacePhotoForUser(userId);
+  const publicHandle = await ensurePublicHandle(userId);
   res.json({
     id: user.id,
     name: user.name,
+    publicHandle,
     email: user.email,
     phone: user.phone,
     role: user.role,
@@ -53,10 +56,12 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
 
   const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning();
   const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
-  const photoUrl = prof ? await getFacePhotoForUser(userId) : null;
+  const photoUrl = await getFacePhotoForUser(userId);
+  const publicHandle = await ensurePublicHandle(userId);
   res.json({
     id: user.id,
     name: user.name,
+    publicHandle,
     email: user.email,
     phone: user.phone,
     role: user.role,

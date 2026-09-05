@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getGetProfileQueryKey } from "@workspace/api-client-react";
 import { User, Star, CheckCircle, Edit2, Shield, Phone, CreditCard } from "lucide-react";
 import { Link } from "wouter";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const SERVICES = [
   "Building", "Plumbing", "Electrical", "Painting", "Tiling",
@@ -83,14 +84,14 @@ export default function Profile() {
       <div className="bg-card rounded-2xl border border-border p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <User size={28} className="text-primary" />
-            </div>
+            <UserAvatar name={profile?.name} photoUrl={profile?.photoUrl} size="lg" />
             <div>
               <h2 className="font-bold text-foreground">{profile?.name}</h2>
+              <p className="text-xs font-semibold text-primary">{profile?.publicHandle}</p>
               <p className="text-sm text-muted-foreground">{profile?.email}</p>
               {profile?.phone && <p className="text-sm text-muted-foreground">{profile.phone}</p>}
               <span className="inline-block mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full capitalize">{profile?.role}</span>
+              <p className="mt-1 max-w-xs text-[11px] text-muted-foreground">Your public name is shown on requests, offers, reviews, and chat.</p>
             </div>
           </div>
           <button
@@ -135,17 +136,11 @@ export default function Profile() {
           {profile?.professional ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                {(profile.professional as any).photoUrl ? (
-                  <img
-                    src={(profile.professional as any).photoUrl}
-                    alt={profile.name}
-                    className="w-14 h-14 rounded-full object-cover border border-border"
+                  <UserAvatar
+                    name={profile.name}
+                    photoUrl={(profile.professional as any).photoUrl}
+                    size="lg"
                   />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User size={24} className="text-primary" />
-                  </div>
-                )}
                 <div>
                   <p className="font-semibold text-foreground">{profile.name}</p>
                   {(profile.professional as any).experience && (
