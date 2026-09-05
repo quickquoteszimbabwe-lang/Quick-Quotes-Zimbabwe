@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable } from "@workspace/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { requireAuth, requireRole, AuthRequest } from "../middlewares/auth";
+import { UpdatePaymentStatusBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -246,6 +247,36 @@ router.get("/payments", async (_req, res) => {
     createdAt: p.createdAt.toISOString(),
     jobDescription: null,
   })));
+});
+
+router.patch("/payments/:id/status", async (req, res) => {
+  const paymentId = parseInt(req.params.id);
+  const parsed = UpdatePaymentStatusBody.safeParse(req.body);
+  if (!Number.isInteger(paymentId) || !parsed.success) {
+    res.status(400).json({ error: "Invalid payment status request" });
+    return;
+  }
+
+  const [payment] = await db
+    .update(paymentsTable)
+    .set({ status: parsed.data.status })
+    .where(eq(paymentsTable.id, paymentId))
+    .returning();
+
+  if (!payment) {
+    res.status(404).json({ error: "Payment not found" });
+    return;
+  }
+
+  res.json({
+    id: payment.id,
+    jobId: payment.jobId,
+    amount: Number(payment.amount),
+    status: payment.status as "pending" | "paid" | "released",
+    method: payment.method as "ecocash" | "bank_transfer" | "paynow",
+    createdAt: payment.createdAt.toISOString(),
+    jobDescription: null,
+  });
 });
 
 export default router;

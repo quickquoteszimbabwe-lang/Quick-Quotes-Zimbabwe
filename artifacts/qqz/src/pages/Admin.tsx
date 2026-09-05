@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   useAdminGetUsers, useAdminGetJobs, useAdminGetPayments, useAdminSuspendUser, useAdminApproveProfessional,
+  useAdminUpdatePaymentStatus,
   useAdminGetCategories, useAdminGetSubcategories, useAdminGetServices,
   useAdminCreateCategory, useAdminUpdateCategory, useAdminDeleteCategory,
   useAdminCreateSubcategory, useAdminUpdateSubcategory, useAdminDeleteSubcategory,
@@ -10,6 +11,7 @@ import type { Category, Subcategory, Service } from "@workspace/api-client-react
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getAdminGetUsersQueryKey, getAdminGetJobsQueryKey,
+  getAdminGetPaymentsQueryKey,
   getAdminGetCategoriesQueryKey, getAdminGetSubcategoriesQueryKey, getAdminGetServicesQueryKey,
 } from "@workspace/api-client-react";
 import { Users, Briefcase, CreditCard, CheckCircle, Ban, ShieldCheck, RotateCcw, Tags, Plus, Pencil, Trash2, X, Star } from "lucide-react";
@@ -27,8 +29,19 @@ export default function Admin() {
   const { data: payments } = useAdminGetPayments();
 
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: getAdminGetUsersQueryKey() });
+  const invalidatePayments = () => queryClient.invalidateQueries({ queryKey: getAdminGetPaymentsQueryKey() });
   const suspendUser = useAdminSuspendUser({ mutation: { onSuccess: invalidateUsers } });
   const approveProf = useAdminApproveProfessional({ mutation: { onSuccess: invalidateUsers } });
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const updatePaymentStatus = useAdminUpdatePaymentStatus({
+    mutation: {
+      onSuccess: () => {
+        setPaymentError(null);
+        invalidatePayments();
+      },
+      onError: (error) => setPaymentError(getMutationErrorMessage(error, "Payment status could not be updated.")),
+    },
+  });
 
   return (
     <div className="space-y-4">
@@ -142,6 +155,7 @@ export default function Admin() {
 
       {tab === "payments" && (
         <div className="space-y-2">
+          {paymentError && <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">{paymentError}</div>}
           {payments?.map(payment => (
             <div key={payment.id} className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between">
@@ -149,9 +163,31 @@ export default function Admin() {
                   <p className="font-semibold text-foreground">{formatCurrency(Number(payment.amount))}</p>
                   <p className="text-xs text-muted-foreground capitalize">{payment.method?.replace("_", " ")} · {formatDate(payment.createdAt)}</p>
                 </div>
-                <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getStatusColor(payment.status))}>
-                  {payment.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getStatusColor(payment.status))}>
+                    {payment.status}
+                  </span>
+                  {payment.status === "pending" && (
+                    <button
+                      type="button"
+                      onClick={() => updatePaymentStatus.mutate({ id: payment.id, data: { status: "paid" } })}
+                      disabled={updatePaymentStatus.isPending}
+                      className="flex items-center gap-1 rounded-lg bg-green-50 px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
+                    >
+                      <ShieldCheck size={13} /> Verify payment
+                    </button>
+                  )}
+                  {payment.status === "paid" && (
+                    <button
+                      type="button"
+                      onClick={() => updatePaymentStatus.mutate({ id: payment.id, data: { status: "released" } })}
+                      disabled={updatePaymentStatus.isPending}
+                      className="flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                    >
+                      <CheckCircle size={13} /> Release funds
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -185,6 +221,7 @@ function ServicesTab() {
 
   const [subTab, setSubTab] = useState<"categories" | "subcategories" | "services">("categories");
   const [categoryFilter, setCategoryFilter] = useState<number | "">("");
+  const [serviceError, setServiceError] = useState<string | null>(null);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: getAdminGetCategoriesQueryKey() });
@@ -200,8 +237,26 @@ function ServicesTab() {
   const updateSubcategory = useAdminUpdateSubcategory({ mutation: { onSuccess: invalidateAll } });
   const deleteSubcategory = useAdminDeleteSubcategory({ mutation: { onSuccess: invalidateAll } });
 
-  const createService = useAdminCreateService({ mutation: { onSuccess: invalidateAll } });
-  const updateService = useAdminUpdateService({ mutation: { onSuccess: invalidateAll } });
+  const createService = useAdminCreateService({
+    mutation: {
+      onSuccess: () => {
+        invalidateAll();
+        setServiceForm(null);
+        setServiceError(null);
+      },
+      onError: (error) => setServiceError(getMutationErrorMessage(error, "Service could not be saved.")),
+    },
+  });
+  const updateService = useAdminUpdateService({
+    mutation: {
+      onSuccess: () => {
+        invalidateAll();
+        setServiceForm(null);
+        setServiceError(null);
+      },
+      onError: (error) => setServiceError(getMutationErrorMessage(error, "Service could not be saved.")),
+    },
+  });
   const deleteService = useAdminDeleteService({ mutation: { onSuccess: invalidateAll } });
 
   const [categoryForm, setCategoryForm] = useState<CategoryFormState | null>(null);
@@ -233,8 +288,14 @@ function ServicesTab() {
   }
 
   function saveService(form: ServiceFormState) {
+    const name = form.name.trim();
+    if (!name || !form.categoryId) {
+      setServiceError("Service name and category are required.");
+      return;
+    }
+    setServiceError(null);
     const data = {
-      name: form.name,
+      name,
       description: form.description || null,
       icon: form.icon,
       categoryId: form.categoryId,
@@ -248,7 +309,6 @@ function ServicesTab() {
     } else {
       createService.mutate({ data });
     }
-    setServiceForm(null);
   }
 
   return (
@@ -331,7 +391,10 @@ function ServicesTab() {
       {subTab === "services" && (
         <div className="space-y-2">
           <button
-            onClick={() => setServiceForm({ name: "", description: "", icon: "Wrench", categoryId: categories?.[0]?.id ?? 0, subcategoryId: null, active: true, featured: false, sortOrder: (services?.length ?? 0) })}
+            onClick={() => {
+              setServiceError(null);
+              setServiceForm({ name: "", description: "", icon: "Wrench", categoryId: categories?.[0]?.id ?? 0, subcategoryId: null, active: true, featured: false, sortOrder: (services?.length ?? 0) });
+            }}
             disabled={!categories?.length}
             className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
           >
@@ -352,7 +415,7 @@ function ServicesTab() {
                 {svc.description && <p className="text-xs text-muted-foreground mt-0.5">{svc.description}</p>}
               </div>
               <div className="flex gap-2 shrink-0">
-                <button onClick={() => setServiceForm({ ...svc, description: svc.description ?? "", subcategoryId: svc.subcategoryId ?? null })} className="text-muted-foreground hover:text-primary"><Pencil size={16} /></button>
+                <button onClick={() => { setServiceError(null); setServiceForm({ ...svc, description: svc.description ?? "", subcategoryId: svc.subcategoryId ?? null }); }} className="text-muted-foreground hover:text-primary"><Pencil size={16} /></button>
                 <button onClick={() => { if (confirm(`Delete service "${svc.name}"?`)) deleteService.mutate({ id: svc.id }); }} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>
               </div>
             </div>
@@ -367,7 +430,15 @@ function ServicesTab() {
         <SubcategoryModal form={subcategoryForm} categories={categories ?? []} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />
       )}
       {serviceForm && (
-        <ServiceModal form={serviceForm} categories={categories ?? []} subcategories={subcategories ?? []} onClose={() => setServiceForm(null)} onSave={saveService} />
+        <ServiceModal
+          form={serviceForm}
+          categories={categories ?? []}
+          subcategories={subcategories ?? []}
+          error={serviceError}
+          isSaving={createService.isPending || updateService.isPending}
+          onClose={() => { setServiceError(null); setServiceForm(null); }}
+          onSave={saveService}
+        />
       )}
     </div>
   );
@@ -385,6 +456,10 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
       </div>
     </div>
   );
+}
+
+function getMutationErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 function CategoryModal({ form, onClose, onSave }: { form: CategoryFormState; onClose: () => void; onSave: (f: CategoryFormState) => void }) {
@@ -422,7 +497,7 @@ function SubcategoryModal({ form, categories, onClose, onSave }: { form: Subcate
   );
 }
 
-function ServiceModal({ form, categories, subcategories, onClose, onSave }: { form: ServiceFormState; categories: Category[]; subcategories: Subcategory[]; onClose: () => void; onSave: (f: ServiceFormState) => void }) {
+function ServiceModal({ form, categories, subcategories, error, isSaving, onClose, onSave }: { form: ServiceFormState; categories: Category[]; subcategories: Subcategory[]; error: string | null; isSaving: boolean; onClose: () => void; onSave: (f: ServiceFormState) => void }) {
   const [state, setState] = useState(form);
   const availableSubcategories = subcategories.filter(s => s.categoryId === state.categoryId);
   return (
@@ -445,7 +520,10 @@ function ServiceModal({ form, categories, subcategories, onClose, onSave }: { fo
           <label className="flex items-center gap-1.5 text-sm text-foreground"><input type="checkbox" checked={state.active} onChange={e => setState({ ...state, active: e.target.checked })} /> Active</label>
           <label className="flex items-center gap-1.5 text-sm text-foreground"><input type="checkbox" checked={state.featured} onChange={e => setState({ ...state, featured: e.target.checked })} /> Featured</label>
         </div>
-        <button onClick={() => onSave(state)} disabled={!state.name} className="w-full bg-primary text-white py-2.5 rounded-xl font-semibold disabled:opacity-50">Save</button>
+        {error && <p role="alert" className="rounded-lg bg-destructive/5 px-3 py-2 text-xs text-destructive">{error}</p>}
+        <button onClick={() => onSave(state)} disabled={!state.name.trim() || !state.categoryId || isSaving} className="w-full bg-primary text-white py-2.5 rounded-xl font-semibold disabled:opacity-50">
+          {isSaving ? "Saving..." : "Save"}
+        </button>
       </div>
     </ModalShell>
   );

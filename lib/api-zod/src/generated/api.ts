@@ -651,6 +651,27 @@ export const AdminGetPaymentsResponseItem = zod.object({
 export const AdminGetPaymentsResponse = zod.array(AdminGetPaymentsResponseItem);
 
 /**
+ * @summary Admin - verify or release a payment
+ */
+export const AdminUpdatePaymentStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdatePaymentStatusBody = zod.object({
+  status: zod.enum(["pending", "paid", "released"]),
+});
+
+export const AdminUpdatePaymentStatusResponse = zod.object({
+  id: zod.number(),
+  jobId: zod.number(),
+  amount: zod.number(),
+  status: zod.enum(["pending", "paid", "released"]),
+  method: zod.enum(["ecocash", "bank_transfer", "paynow"]),
+  createdAt: zod.string(),
+  jobDescription: zod.string().nullish(),
+});
+
+/**
  * @summary List active categories
  */
 export const GetCategoriesQueryParams = zod.object({
