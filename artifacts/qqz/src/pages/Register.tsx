@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRegister } from "@workspace/api-client-react";
 import { Eye, EyeOff, AlertCircle, User, Briefcase, Phone, KeyRound, CheckCircle, RefreshCw } from "lucide-react";
 
 const TOTAL_STEPS = 4;
@@ -25,6 +26,7 @@ export default function Register() {
   const [role, setRole] = useState<"customer" | "professional" | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const registerUser = useRegister();
 
   async function handleSendOtp() {
     if (!phone.trim()) { setError("Enter your phone number first"); return; }
@@ -66,22 +68,11 @@ export default function Register() {
     if (!role) return;
     setError("");
     setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone: phone.trim() || undefined, password, role }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Registration failed");
-        setStep(1);
-        return;
-      }
-      login(data.token, data.user);
-      navigate("/verify");
-    } catch { setError("Network error. Please try again."); }
-    finally { setLoading(false); }
+    registerUser.mutate({ data: { name: name.trim(), email: email.trim(), phone: phone.trim() || undefined, password, role } }, {
+      onSuccess: (data) => { login(data.token, { ...data.user, phone: data.user.phone ?? null, phoneVerified: (data.user as any).phoneVerified ?? true, idVerified: (data.user as any).idVerified ?? false, faceVerified: (data.user as any).faceVerified ?? false }); navigate("/verify"); },
+      onError: (reason: any) => { setError(reason?.data?.error || reason?.message || "Registration failed"); setStep(1); },
+      onSettled: () => setLoading(false),
+    });
   }
 
   return (

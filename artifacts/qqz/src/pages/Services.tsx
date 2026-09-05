@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useGetCategoryTree } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Search, X, ChevronRight, Grid3X3, Layers3 } from "lucide-react";
@@ -108,7 +108,12 @@ export default function Services() {
   const isSearching = search.trim().length > 0;
 
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5", !user && "min-h-[100dvh] bg-background px-5 sm:px-8 pb-12")}>
+      {!user && <header className="max-w-6xl mx-auto -mx-5 sm:-mx-8 px-5 sm:px-8 h-[72px] border-b border-border flex items-center justify-between mb-8">
+        <Link href="/" data-testid="link-services-public-brand" className="flex items-center gap-2 font-bold text-primary"><span className="w-9 h-9 rounded-lg bg-primary text-accent flex items-center justify-center">Q</span> QQZ<span className="text-accent">.</span></Link>
+        <div className="flex items-center gap-2"><Link href="/login" data-testid="link-services-login" className="px-3 py-2 text-sm font-semibold text-primary">Sign in</Link><Link href="/register" data-testid="link-services-register" className="px-3 py-2 rounded-lg bg-accent text-primary text-sm font-bold">Join QQZ</Link></div>
+      </header>}
+      <div className="max-w-[1180px] mx-auto w-full">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-foreground">Browse Services</h1>
@@ -301,6 +306,7 @@ export default function Services() {
           )}
         </div>
       )}
-    </div>
+      </div>
+      </div>
   );
 }

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -78,45 +79,45 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 213 33% 97%;
-  --foreground: 213 50% 15%;
-  --border: 213 20% 88%;
+  --background: 204 38% 96%;
+  --foreground: 215 46% 17%;
+  --border: 207 25% 86%;
   --card: 0 0% 100%;
-  --card-foreground: 213 50% 15%;
-  --card-border: 213 20% 90%;
-  --sidebar: 214 57% 22%;
-  --sidebar-foreground: 0 0% 95%;
-  --sidebar-border: 214 40% 30%;
-  --sidebar-primary: 28 91% 54%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 214 57% 35%;
+  --card-foreground: 215 46% 17%;
+  --card-border: 207 25% 88%;
+  --sidebar: 215 53% 18%;
+  --sidebar-foreground: 204 30% 95%;
+  --sidebar-border: 215 42% 28%;
+  --sidebar-primary: 30 92% 55%;
+  --sidebar-primary-foreground: 215 46% 17%;
+  --sidebar-accent: 180 35% 29%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 28 91% 54%;
+  --sidebar-ring: 30 92% 55%;
   --popover: 0 0% 100%;
-  --popover-foreground: 214 57% 15%;
-  --popover-border: 214 20% 88%;
-  --primary: 214 57% 27%;
+  --popover-foreground: 215 46% 17%;
+  --popover-border: 207 25% 88%;
+  --primary: 215 53% 22%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 214 40% 40%;
+  --secondary: 180 35% 29%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 214 20% 94%;
-  --muted-foreground: 214 20% 50%;
-  --accent: 28 91% 54%;
-  --accent-foreground: 0 0% 100%;
+  --muted: 204 30% 92%;
+  --muted-foreground: 211 19% 48%;
+  --accent: 30 92% 55%;
+  --accent-foreground: 215 46% 17%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --input: 214 20% 85%;
-  --ring: 28 91% 54%;
-  --chart-1: 214 57% 27%;
-  --chart-2: 28 91% 54%;
-  --chart-3: 214 40% 50%;
-  --chart-4: 28 70% 40%;
-  --chart-5: 214 57% 60%;
+  --input: 207 25% 82%;
+  --ring: 30 92% 55%;
+  --chart-1: 215 53% 22%;
+  --chart-2: 30 92% 55%;
+  --chart-3: 180 35% 29%;
+  --chart-4: 30 69% 39%;
+  --chart-5: 203 54% 55%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
-  --radius: .5rem; /* 8px */
+  --app-font-sans: 'DM Sans', sans-serif;
+  --app-font-serif: 'Space Grotesk', sans-serif;
+  --app-font-mono: 'Space Mono', monospace;
+  --radius: .75rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
   --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
@@ -222,7 +223,12 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    background-image: radial-gradient(circle at 15% 0%, hsl(30 92% 55% / .08), transparent 30rem);
   }
+
+  h1, h2, h3, h4 { font-family: var(--app-font-serif); letter-spacing: -0.025em; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  ::selection { background: hsl(var(--accent) / .28); }
 }
 
 /**
@@ -336,3 +342,17 @@
     inset: -1px;
   }
 }
+
+@layer utilities {
+  .qqz-shell { background: linear-gradient(135deg, hsl(204 38% 96%), hsl(202 45% 94%)); }
+  .qqz-grid { background-image: linear-gradient(hsl(215 53% 22% / .035) 1px, transparent 1px), linear-gradient(90deg, hsl(215 53% 22% / .035) 1px, transparent 1px); background-size: 28px 28px; }
+  .qqz-card { box-shadow: 0 14px 40px hsl(215 53% 22% / .07), 0 2px 8px hsl(215 53% 22% / .04); }
+  .qqz-enter { animation: qqz-enter .45s cubic-bezier(.22,1,.36,1) both; }
+  .qqz-enter-delay { animation: qqz-enter .55s .08s cubic-bezier(.22,1,.36,1) both; }
+  .qqz-hover { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .qqz-hover:hover { transform: translateY(-3px); box-shadow: 0 16px 36px hsl(215 53% 22% / .11); }
+  .scrollbar-hide { scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+@keyframes qqz-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

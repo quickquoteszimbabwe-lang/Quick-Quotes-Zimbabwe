@@ -6,7 +6,7 @@ export interface PricingModel {
 }
 
 export const PRICING_MODELS: PricingModel[] = [
-  { value: "fixed_price", label: "Fixed Price", unit: "", description: "One total price for the entire job" },
+  { value: "fixed_price", label: "Fixed Price", unit: "", description: "One total price for the entire request" },
   { value: "per_minute", label: "Per Minute", unit: "min", description: "Charged per minute" },
   { value: "per_hour", label: "Per Hour", unit: "hr", description: "Charged per hour" },
   { value: "per_half_day", label: "Per Half Day", unit: "½ day", description: "Charged per half day (4 hrs)" },
