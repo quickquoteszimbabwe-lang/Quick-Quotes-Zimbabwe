@@ -1,73 +1,25 @@
 import { useGetPayments } from "@workspace/api-client-react";
-import { CreditCard } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, CircleDollarSign, CreditCard, ReceiptText, ShieldCheck } from "lucide-react";
 import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-const METHOD_LABELS: Record<string, string> = {
-  ecocash: "EcoCash",
-  bank_transfer: "Bank Transfer",
-  paynow: "Paynow",
-};
+const METHOD_LABELS: Record<string, string> = { ecocash: "EcoCash", bank_transfer: "Bank Transfer", paynow: "Paynow" };
 
 export default function Payments() {
-  const { data: payments, isLoading } = useGetPayments();
+  const { data: payments, isLoading, error, refetch } = useGetPayments();
+  const total = payments?.reduce((sum, payment) => sum + Number(payment.amount), 0) ?? 0;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-foreground">Payments</h1>
-
-      {isLoading && (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {!isLoading && payments?.length === 0 && (
-        <div className="text-center py-12">
-          <CreditCard size={48} className="mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground font-medium">No payment records yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Payments appear here when requests are funded</p>
-        </div>
-      )}
-
+    <div className="space-y-7 qqz-enter">
+      <div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Money trail</p><h1 className="text-3xl text-primary mt-1">Payments & receipts</h1><p className="text-sm text-muted-foreground mt-2">A clear record of every funded request.</p></div><button data-testid="button-download-receipts" onClick={() => window.print()} className="hidden sm:flex items-center gap-2 border border-border bg-card rounded-xl px-3 py-2 text-xs font-bold text-secondary hover:border-secondary/40"><ArrowDownToLine size={15} /> Export view</button></div>
+      <section className="rounded-2xl bg-secondary text-white p-5 sm:p-6 flex flex-col sm:flex-row sm:items-end justify-between gap-5"><div><p className="text-xs uppercase tracking-[.15em] text-white/55">Recorded on QQZ</p><p data-testid="text-payments-total" className="mt-2 text-3xl font-bold">{formatCurrency(total)}</p><p className="mt-1 text-xs text-white/55">{payments?.length ?? 0} payment record{payments?.length === 1 ? "" : "s"}</p></div><div className="flex items-center gap-2 text-xs text-white/70"><ShieldCheck size={16} className="text-accent" /> Payment status is always visible</div></section>
+      {isLoading && <div className="space-y-3" data-testid="state-payments-loading">{[1,2,3].map((item) => <div key={item} className="h-24 rounded-2xl bg-muted animate-pulse" />)}</div>}
+      {error && <div data-testid="state-payments-error" className="rounded-2xl border border-destructive/20 bg-destructive/5 text-center p-8"><p className="text-sm text-destructive">Payments could not be loaded.</p><button onClick={() => refetch()} data-testid="button-retry-payments" className="mt-3 text-sm font-bold text-secondary">Try again</button></div>}
+      {!isLoading && !error && payments?.length === 0 && <div data-testid="state-payments-empty" className="rounded-2xl border border-dashed border-border bg-card p-12 text-center"><CircleDollarSign size={34} className="mx-auto text-secondary/60 mb-3" /><p className="font-bold text-primary">Your payment trail starts here</p><p className="text-sm text-muted-foreground mt-1">When a request is funded, receipts and status updates will appear in this space.</p></div>}
       <div className="space-y-3">
-        {payments?.map(payment => (
-          <div key={payment.id} className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <p className="font-semibold text-foreground">{formatCurrency(Number(payment.amount))}</p>
-                <p className="text-sm text-muted-foreground">{METHOD_LABELS[payment.method] || payment.method}</p>
-              </div>
-              <span className={cn("text-xs font-medium px-2 py-1 rounded-full", getStatusColor(payment.status))}>
-                {payment.status}
-              </span>
-            </div>
-            {payment.jobDescription && (
-              <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{payment.jobDescription}</p>
-            )}
-            <p className="text-xs text-muted-foreground">{formatDate(payment.createdAt)}</p>
-          </div>
-        ))}
+        {payments?.map((payment) => <div key={payment.id} data-testid={`card-payment-${payment.id}`} className="qqz-hover bg-card rounded-2xl border border-border p-4 flex items-start gap-3"><span className="w-10 h-10 rounded-xl bg-accent/12 text-accent flex items-center justify-center shrink-0"><ReceiptText size={18} /></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-bold text-primary">{formatCurrency(Number(payment.amount))}</p><span data-testid={`status-payment-${payment.id}`} className={cn("text-[10px] font-bold px-2 py-1 rounded-full capitalize", getStatusColor(payment.status))}>{payment.status}</span></div><p className="text-xs text-muted-foreground mt-1">{METHOD_LABELS[payment.method] || payment.method} <span className="mx-1">·</span> {formatDate(payment.createdAt)}</p>{payment.jobDescription && <p className="text-sm text-muted-foreground line-clamp-1 mt-2">{payment.jobDescription}</p>}</div><CheckCircle2 size={17} className={payment.status === "paid" || payment.status === "released" ? "text-secondary" : "text-muted-foreground/30"} /></div>)}
       </div>
-
-      <div className="bg-card rounded-2xl border border-border p-4 mt-4">
-        <h3 className="font-semibold text-foreground mb-2">Payment Methods</h3>
-        <div className="space-y-2">
-          {[
-            { name: "EcoCash", desc: "Mobile money payments via Econet", color: "bg-green-100 text-green-800" },
-            { name: "Bank Transfer", desc: "Direct bank to bank transfer", color: "bg-blue-100 text-blue-800" },
-            { name: "Paynow", desc: "Zimbabwe's online payment gateway", color: "bg-purple-100 text-purple-800" },
-          ].map(m => (
-            <div key={m.name} className="flex items-center gap-3">
-              <span className={cn("text-xs font-medium px-2 py-1 rounded-full", m.color)}>{m.name}</span>
-              <span className="text-sm text-muted-foreground">{m.desc}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          * Payments are simulated for MVP. Integration with real payment gateways coming soon.
-        </p>
-      </div>
+      <section className="bg-card rounded-2xl border border-border p-5"><div className="flex items-center gap-2"><CreditCard size={18} className="text-secondary" /><h2 className="font-bold text-primary">Supported payment methods</h2></div><div className="mt-4 grid sm:grid-cols-3 gap-2">{Object.entries(METHOD_LABELS).map(([key, label]) => <div key={key} className="rounded-xl bg-muted px-3 py-3 text-sm font-semibold text-primary">{label}<p className="text-[11px] text-muted-foreground font-normal mt-1">{key === "ecocash" ? "Mobile money" : key === "paynow" ? "Online gateway" : "Direct transfer"}</p></div>)}</div><p className="mt-4 text-[11px] text-muted-foreground">QQZ keeps payment records connected to the request they belong to. Gateway settlement is handled through the available payment flow.</p></section>
     </div>
   );
 }
