@@ -49,8 +49,9 @@ export function Layout({ children }: LayoutProps) {
     <div className="qqz-shell min-h-[100dvh] flex flex-col md:flex-row">
       <aside className="hidden md:flex w-[244px] shrink-0 bg-sidebar text-sidebar-foreground flex-col sticky top-0 h-[100dvh] px-4 py-5">
         <Link href="/home" data-testid="link-brand" className="flex items-center gap-3 px-3 mb-9">
-          <span className="w-10 h-10 rounded-xl bg-accent text-primary flex items-center justify-center font-bold text-xl">Q</span>
-          <span className="font-semibold tracking-tight text-lg">QQZ<span className="text-accent">.</span></span>
+          <span className="h-12 w-[164px] overflow-hidden rounded-lg bg-sidebar px-2 py-1">
+            <img src="/logo.png" alt="Quick Quotes Zimbabwe" className="h-full w-full scale-[1.45] object-contain object-left" />
+          </span>
         </Link>
         <div className="px-3 mb-3 text-[10px] uppercase tracking-[.18em] text-sidebar-foreground/45">Workspace</div>
         <nav className="space-y-1">

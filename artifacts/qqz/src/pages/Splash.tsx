@@ -27,8 +27,9 @@ export default function Splash() {
       <header className="relative z-10 border-b border-border/70 bg-card/70 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between">
           <Link href="/" data-testid="link-public-brand" className="flex items-center gap-2.5">
-            <span className="w-10 h-10 rounded-xl bg-primary text-accent flex items-center justify-center font-bold text-xl">Q</span>
-            <div><span className="font-bold tracking-tight text-lg">QQZ</span><span className="text-accent font-bold text-lg">.</span><div className="text-[9px] uppercase tracking-[.18em] text-muted-foreground -mt-1">Zimbabwe</div></div>
+            <span className="h-12 w-[122px] overflow-hidden rounded-lg bg-primary px-2 py-1">
+              <img src="/logo.png" alt="Quick Quotes Zimbabwe" className="h-full w-full scale-[1.45] object-contain" />
+            </span>
           </Link>
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground">
             <Link href="/services" data-testid="link-public-services" className="hover:text-primary transition-colors">Browse services</Link>
