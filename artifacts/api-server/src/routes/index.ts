@@ -10,6 +10,8 @@ import adminRouter from "./admin";
 import verificationRouter from "./verification";
 import servicesRouter from "./services";
 import messagesRouter from "./messages";
+import newsRouter from "./news";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -18,6 +20,8 @@ router.use("/auth", authRouter);
 router.use("/users", usersRouter);
 router.use("/jobs", jobsRouter);
 router.use("/jobs", messagesRouter);
+router.use(newsRouter);
+router.use(storageRouter);
 router.use("/quotes", quotesRouter);
 router.use("/payments", paymentsRouter);
 router.use("/reviews", reviewsRouter);
