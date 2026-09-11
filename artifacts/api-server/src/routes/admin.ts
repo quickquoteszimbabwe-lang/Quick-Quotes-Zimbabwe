@@ -1,15 +1,73 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable, jobMessagesTable } from "@workspace/db/schema";
+import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable, jobMessagesTable, newsTable } from "@workspace/db/schema";
 import { eq, asc, desc, inArray } from "drizzle-orm";
 import { requireAuth, requireRole, AuthRequest } from "../middlewares/auth";
-import { AdminModerateMessageBody, UpdatePaymentStatusBody } from "@workspace/api-zod";
+import { AdminModerateMessageBody, UpdatePaymentStatusBody, CreateNewsBody, UpdateNewsBody } from "@workspace/api-zod";
 import { ensurePublicHandles } from "../lib/public-identity";
 import { getFacePhotoMap } from "../lib/photo";
+import { formatNewsArticle } from "./news";
 
 const router: IRouter = Router();
 
 router.use(requireAuth, requireRole("admin"));
+
+router.get("/news", async (_req, res) => {
+  const articles = await db.select().from(newsTable).orderBy(desc(newsTable.publishedAt), desc(newsTable.createdAt));
+  res.json(articles.map(formatNewsArticle));
+});
+
+router.post("/news", async (req: AuthRequest, res) => {
+  const parsed = CreateNewsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Headline and article body are required" });
+    return;
+  }
+  const [article] = await db.insert(newsTable).values({
+    headline: parsed.data.headline.trim(),
+    body: parsed.data.body.trim(),
+    imagePath: parsed.data.imagePath ?? null,
+    publishedAt: parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date(),
+    active: parsed.data.active ?? true,
+    createdBy: req.user!.userId,
+  }).returning();
+  res.status(201).json(formatNewsArticle(article));
+});
+
+router.patch("/news/:id", async (req: AuthRequest, res) => {
+  const id = Number(req.params.id);
+  const parsed = UpdateNewsBody.safeParse(req.body);
+  if (!Number.isInteger(id) || !parsed.success) {
+    res.status(400).json({ error: "Invalid news update" });
+    return;
+  }
+  const values: Partial<typeof newsTable.$inferInsert> = {};
+  if (parsed.data.headline !== undefined) values.headline = parsed.data.headline.trim();
+  if (parsed.data.body !== undefined) values.body = parsed.data.body.trim();
+  if (parsed.data.imagePath !== undefined) values.imagePath = parsed.data.imagePath;
+  if (parsed.data.publishedAt !== undefined) values.publishedAt = new Date(parsed.data.publishedAt);
+  if (parsed.data.active !== undefined) values.active = parsed.data.active;
+  const [article] = await db.update(newsTable).set(values).where(eq(newsTable.id, id)).returning();
+  if (!article) {
+    res.status(404).json({ error: "News article not found" });
+    return;
+  }
+  res.json(formatNewsArticle(article));
+});
+
+router.delete("/news/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ error: "Invalid news article id" });
+    return;
+  }
+  const [article] = await db.delete(newsTable).where(eq(newsTable.id, id)).returning();
+  if (!article) {
+    res.status(404).json({ error: "News article not found" });
+    return;
+  }
+  res.json({ message: "News article deleted" });
+});
 
 function formatCategory(c: typeof categoriesTable.$inferSelect) {
   return { id: c.id, name: c.name, icon: c.icon, active: c.active, featured: c.featured, sortOrder: c.sortOrder };
