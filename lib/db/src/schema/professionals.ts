@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 export const professionalsTable = pgTable("professionals", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
+  accountType: text("account_type").notNull().default("individual"),
   services: text("services").array().notNull().default([]),
   rating: numeric("rating", { precision: 3, scale: 2 }),
   verified: boolean("verified").notNull().default(false),

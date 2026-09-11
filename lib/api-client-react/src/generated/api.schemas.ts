@@ -37,6 +37,14 @@ export interface User {
   createdAt: string;
 }
 
+export type ProfessionalAccountType =
+  (typeof ProfessionalAccountType)[keyof typeof ProfessionalAccountType];
+
+export const ProfessionalAccountType = {
+  individual: "individual",
+  company: "company",
+} as const;
+
 export interface Professional {
   id: number;
   userId: number;
@@ -51,6 +59,7 @@ export interface Professional {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType: ProfessionalAccountType;
   /** @nullable */
   photoUrl?: string | null;
 }
@@ -103,6 +112,14 @@ export interface UpdateProfileRequest {
   phone?: string | null;
 }
 
+export type CreateProfessionalRequestAccountType =
+  (typeof CreateProfessionalRequestAccountType)[keyof typeof CreateProfessionalRequestAccountType];
+
+export const CreateProfessionalRequestAccountType = {
+  individual: "individual",
+  company: "company",
+} as const;
+
 export interface CreateProfessionalRequest {
   services: string[];
   /** @nullable */
@@ -111,6 +128,7 @@ export interface CreateProfessionalRequest {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType?: CreateProfessionalRequestAccountType;
 }
 
 export interface UpdateProfessionalRequest {
@@ -121,6 +139,37 @@ export interface UpdateProfessionalRequest {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+}
+
+export interface Company {
+  id: number;
+  professionalId: number;
+  name: string;
+  registrationNumber: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
+  taxClearanceVerified: boolean;
+  createdAt: string;
+}
+
+export interface CreateCompanyRequest {
+  name: string;
+  registrationNumber: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
+}
+
+export interface UpdateCompanyRequest {
+  name?: string;
+  registrationNumber?: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
 }
 
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];

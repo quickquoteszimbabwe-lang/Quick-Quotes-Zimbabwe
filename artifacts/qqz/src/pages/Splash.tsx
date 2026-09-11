@@ -4,6 +4,7 @@ import { useGetCategoryTree } from "@workspace/api-client-react";
 import { ArrowRight, BadgeCheck, BriefcaseBusiness, Building2, CalendarCheck, CarFront, CheckCircle2, ChevronRight, CircleDollarSign, Clock3, Construction, Hammer, HelpCircle, Mail, MapPin, Search, ShieldCheck, Smartphone, Sparkles, UserRound, UsersRound } from "lucide-react";
 import { getCategoryIcon, getCategoryColor } from "@/lib/iconMap";
 import { cn } from "@/lib/utils";
+import ProviderHandshake from "@/components/ProviderHandshake";
 
 const proof = [
   { icon: ShieldCheck, title: "Verified providers", text: "Identity and service profiles you can trust." },
@@ -118,6 +119,7 @@ export default function Splash() {
             <Link href="/register" data-testid="link-home-download-app" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-primary">Create your account <ArrowRight size={15} /></Link>
           </div>
           <div className="rounded-3xl border border-border bg-card p-7 md:p-10">
+            <div className="mb-6 max-w-[240px]"><ProviderHandshake /></div>
             <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">For providers and owners</p>
             <h2 className="mt-2 text-3xl text-primary">Turn your expertise or asset into opportunity.</h2>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">Build a trusted profile, share your services and respond to real requests. Verification and reviews make the right clients easier to find.</p>

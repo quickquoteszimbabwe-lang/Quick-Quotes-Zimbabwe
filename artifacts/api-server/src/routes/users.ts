@@ -1,9 +1,15 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { usersTable, professionalsTable } from "@workspace/db/schema";
+import { usersTable, professionalsTable, companiesTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth, AuthRequest } from "../middlewares/auth";
-import { UpdateProfileBody, CreateProfessionalProfileBody, UpdateProfessionalProfileBody } from "@workspace/api-zod";
+import {
+  UpdateProfileBody,
+  CreateProfessionalProfileBody,
+  UpdateProfessionalProfileBody,
+  CreateCompanyProfileBody,
+  UpdateCompanyProfileBody,
+} from "@workspace/api-zod";
 import { getFacePhotoForUser } from "../lib/photo";
 import { ensurePublicHandle } from "../lib/public-identity";
 
@@ -38,6 +44,7 @@ router.get("/profile", requireAuth, async (req: AuthRequest, res) => {
       bio: prof.bio,
       location: prof.location,
       experience: prof.experience,
+      accountType: prof.accountType,
       photoUrl,
     } : undefined,
   });
@@ -77,6 +84,7 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
       bio: prof.bio,
       location: prof.location,
       experience: prof.experience,
+      accountType: prof.accountType,
       photoUrl,
     } : undefined,
   });
@@ -100,6 +108,7 @@ router.get("/professional", requireAuth, async (req: AuthRequest, res) => {
     bio: prof.bio,
     location: prof.location,
     experience: prof.experience,
+    accountType: prof.accountType,
     photoUrl,
   });
 });
@@ -117,6 +126,7 @@ router.post("/professional", requireAuth, async (req: AuthRequest, res) => {
     bio: parsed.data.bio ?? null,
     location: parsed.data.location ?? null,
     experience: parsed.data.experience ?? null,
+    accountType: parsed.data.accountType ?? "individual",
   }).returning();
   const photoUrl = await getFacePhotoForUser(userId);
   res.status(201).json({
@@ -129,6 +139,7 @@ router.post("/professional", requireAuth, async (req: AuthRequest, res) => {
     bio: prof.bio,
     location: prof.location,
     experience: prof.experience,
+    accountType: prof.accountType,
     photoUrl,
   });
 });
@@ -158,7 +169,101 @@ router.patch("/professional", requireAuth, async (req: AuthRequest, res) => {
     bio: prof.bio,
     location: prof.location,
     experience: prof.experience,
+    accountType: prof.accountType,
     photoUrl,
+  });
+});
+
+router.get("/company", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.userId;
+  const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
+  if (!prof) {
+    res.status(404).json({ error: "Professional profile not found" });
+    return;
+  }
+  const [company] = await db.select().from(companiesTable).where(eq(companiesTable.professionalId, prof.id));
+  if (!company) {
+    res.status(404).json({ error: "Company profile not found" });
+    return;
+  }
+  res.json({
+    id: company.id,
+    professionalId: company.professionalId,
+    name: company.name,
+    registrationNumber: company.registrationNumber,
+    industry: company.industry,
+    address: company.address,
+    taxClearanceVerified: company.taxClearanceVerified,
+    createdAt: company.createdAt.toISOString(),
+  });
+});
+
+router.post("/company", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.userId;
+  const parsed = CreateCompanyProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
+  if (!prof) {
+    res.status(404).json({ error: "Professional profile not found" });
+    return;
+  }
+  if (prof.accountType !== "company") {
+    await db.update(professionalsTable).set({ accountType: "company" }).where(eq(professionalsTable.id, prof.id));
+  }
+  const [company] = await db.insert(companiesTable).values({
+    professionalId: prof.id,
+    name: parsed.data.name,
+    registrationNumber: parsed.data.registrationNumber,
+    industry: parsed.data.industry ?? null,
+    address: parsed.data.address ?? null,
+  }).returning();
+  res.status(201).json({
+    id: company.id,
+    professionalId: company.professionalId,
+    name: company.name,
+    registrationNumber: company.registrationNumber,
+    industry: company.industry,
+    address: company.address,
+    taxClearanceVerified: company.taxClearanceVerified,
+    createdAt: company.createdAt.toISOString(),
+  });
+});
+
+router.patch("/company", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.userId;
+  const parsed = UpdateCompanyProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const [prof] = await db.select().from(professionalsTable).where(eq(professionalsTable.userId, userId));
+  if (!prof) {
+    res.status(404).json({ error: "Professional profile not found" });
+    return;
+  }
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.name !== undefined) updates.name = parsed.data.name;
+  if (parsed.data.registrationNumber !== undefined) updates.registrationNumber = parsed.data.registrationNumber;
+  if (parsed.data.industry !== undefined) updates.industry = parsed.data.industry;
+  if (parsed.data.address !== undefined) updates.address = parsed.data.address;
+
+  const [company] = await db.update(companiesTable).set(updates).where(eq(companiesTable.professionalId, prof.id)).returning();
+  if (!company) {
+    res.status(404).json({ error: "Company profile not found" });
+    return;
+  }
+  res.json({
+    id: company.id,
+    professionalId: company.professionalId,
+    name: company.name,
+    registrationNumber: company.registrationNumber,
+    industry: company.industry,
+    address: company.address,
+    taxClearanceVerified: company.taxClearanceVerified,
+    createdAt: company.createdAt.toISOString(),
   });
 });
 
