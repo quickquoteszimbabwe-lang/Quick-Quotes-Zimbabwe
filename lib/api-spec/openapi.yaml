@@ -205,6 +205,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/Professional"
 
+  /users/company:
+    get:
+      operationId: getCompanyProfile
+      tags: [users]
+      summary: Get company profile for current user
+      responses:
+        "200":
+          description: Company profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: createCompanyProfile
+      tags: [users]
+      summary: Create company profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompanyRequest"
+      responses:
+        "201":
+          description: Company profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+    patch:
+      operationId: updateCompanyProfile
+      tags: [users]
+      summary: Update company profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyRequest"
+      responses:
+        "200":
+          description: Updated company profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
   /jobs:
     get:
       operationId: getJobs
@@ -1081,6 +1136,9 @@ components:
           type: ["string", "null"]
         experience:
           type: ["string", "null"]
+        accountType:
+          type: string
+          enum: [individual, company]
         photoUrl:
           type: ["string", "null"]
       required:
@@ -1089,6 +1147,7 @@ components:
         - services
         - verified
         - completedJobs
+        - accountType
 
     RegisterRequest:
       type: object
@@ -1153,6 +1212,9 @@ components:
           type: ["string", "null"]
         experience:
           type: ["string", "null"]
+        accountType:
+          type: string
+          enum: [individual, company]
       required:
         - services
 
@@ -1168,6 +1230,60 @@ components:
         location:
           type: ["string", "null"]
         experience:
+          type: ["string", "null"]
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+        professionalId:
+          type: integer
+        name:
+          type: string
+        registrationNumber:
+          type: string
+        industry:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        taxClearanceVerified:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - professionalId
+        - name
+        - registrationNumber
+        - taxClearanceVerified
+        - createdAt
+
+    CreateCompanyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        registrationNumber:
+          type: string
+        industry:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+      required:
+        - name
+        - registrationNumber
+
+    UpdateCompanyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        registrationNumber:
+          type: string
+        industry:
+          type: ["string", "null"]
+        address:
           type: ["string", "null"]
 
     Job:

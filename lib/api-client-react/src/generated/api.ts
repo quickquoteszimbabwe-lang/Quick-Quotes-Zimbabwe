@@ -22,7 +22,9 @@ import type {
   AuthResponse,
   Category,
   CategoryTreeNode,
+  Company,
   CreateCategoryRequest,
+  CreateCompanyRequest,
   CreateJobRequest,
   CreatePaymentRequest,
   CreateProfessionalRequest,
@@ -52,6 +54,7 @@ import type {
   Service,
   Subcategory,
   UpdateCategoryRequest,
+  UpdateCompanyRequest,
   UpdateJobRequest,
   UpdatePaymentStatusRequest,
   UpdateProfessionalRequest,
@@ -871,6 +874,253 @@ export const useUpdateProfessionalProfile = <
   TContext
 > => {
   return useMutation(getUpdateProfessionalProfileMutationOptions(options));
+};
+
+/**
+ * @summary Get company profile for current user
+ */
+export const getGetCompanyProfileUrl = () => {
+  return `/api/users/company`;
+};
+
+export const getCompanyProfile = async (
+  options?: RequestInit,
+): Promise<Company> => {
+  return customFetch<Company>(getGetCompanyProfileUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCompanyProfileQueryKey = () => {
+  return [`/api/users/company`] as const;
+};
+
+export const getGetCompanyProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCompanyProfile>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCompanyProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCompanyProfileQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCompanyProfile>>
+  > = ({ signal }) => getCompanyProfile({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCompanyProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCompanyProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCompanyProfile>>
+>;
+export type GetCompanyProfileQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get company profile for current user
+ */
+
+export function useGetCompanyProfile<
+  TData = Awaited<ReturnType<typeof getCompanyProfile>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCompanyProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCompanyProfileQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create company profile
+ */
+export const getCreateCompanyProfileUrl = () => {
+  return `/api/users/company`;
+};
+
+export const createCompanyProfile = async (
+  createCompanyRequest: CreateCompanyRequest,
+  options?: RequestInit,
+): Promise<Company> => {
+  return customFetch<Company>(getCreateCompanyProfileUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCompanyRequest),
+  });
+};
+
+export const getCreateCompanyProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCompanyProfile>>,
+    TError,
+    { data: BodyType<CreateCompanyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCompanyProfile>>,
+  TError,
+  { data: BodyType<CreateCompanyRequest> },
+  TContext
+> => {
+  const mutationKey = ["createCompanyProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCompanyProfile>>,
+    { data: BodyType<CreateCompanyRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCompanyProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCompanyProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCompanyProfile>>
+>;
+export type CreateCompanyProfileMutationBody = BodyType<CreateCompanyRequest>;
+export type CreateCompanyProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create company profile
+ */
+export const useCreateCompanyProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCompanyProfile>>,
+    TError,
+    { data: BodyType<CreateCompanyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCompanyProfile>>,
+  TError,
+  { data: BodyType<CreateCompanyRequest> },
+  TContext
+> => {
+  return useMutation(getCreateCompanyProfileMutationOptions(options));
+};
+
+/**
+ * @summary Update company profile
+ */
+export const getUpdateCompanyProfileUrl = () => {
+  return `/api/users/company`;
+};
+
+export const updateCompanyProfile = async (
+  updateCompanyRequest: UpdateCompanyRequest,
+  options?: RequestInit,
+): Promise<Company> => {
+  return customFetch<Company>(getUpdateCompanyProfileUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCompanyRequest),
+  });
+};
+
+export const getUpdateCompanyProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCompanyProfile>>,
+    TError,
+    { data: BodyType<UpdateCompanyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCompanyProfile>>,
+  TError,
+  { data: BodyType<UpdateCompanyRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateCompanyProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCompanyProfile>>,
+    { data: BodyType<UpdateCompanyRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateCompanyProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCompanyProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCompanyProfile>>
+>;
+export type UpdateCompanyProfileMutationBody = BodyType<UpdateCompanyRequest>;
+export type UpdateCompanyProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update company profile
+ */
+export const useUpdateCompanyProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCompanyProfile>>,
+    TError,
+    { data: BodyType<UpdateCompanyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCompanyProfile>>,
+  TError,
+  { data: BodyType<UpdateCompanyRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateCompanyProfileMutationOptions(options));
 };
 
 /**

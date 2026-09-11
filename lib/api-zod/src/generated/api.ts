@@ -92,6 +92,7 @@ export const GetProfileResponse = zod.object({
       bio: zod.string().nullish(),
       location: zod.string().nullish(),
       experience: zod.string().nullish(),
+      accountType: zod.enum(["individual", "company"]),
       photoUrl: zod.string().nullish(),
     })
     .optional(),
@@ -126,6 +127,7 @@ export const UpdateProfileResponse = zod.object({
       bio: zod.string().nullish(),
       location: zod.string().nullish(),
       experience: zod.string().nullish(),
+      accountType: zod.enum(["individual", "company"]),
       photoUrl: zod.string().nullish(),
     })
     .optional(),
@@ -144,6 +146,7 @@ export const GetProfessionalProfileResponse = zod.object({
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
   experience: zod.string().nullish(),
+  accountType: zod.enum(["individual", "company"]),
   photoUrl: zod.string().nullish(),
 });
 
@@ -155,6 +158,7 @@ export const CreateProfessionalProfileBody = zod.object({
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
   experience: zod.string().nullish(),
+  accountType: zod.enum(["individual", "company"]).optional(),
 });
 
 /**
@@ -177,7 +181,53 @@ export const UpdateProfessionalProfileResponse = zod.object({
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
   experience: zod.string().nullish(),
+  accountType: zod.enum(["individual", "company"]),
   photoUrl: zod.string().nullish(),
+});
+
+/**
+ * @summary Get company profile for current user
+ */
+export const GetCompanyProfileResponse = zod.object({
+  id: zod.number(),
+  professionalId: zod.number(),
+  name: zod.string(),
+  registrationNumber: zod.string(),
+  industry: zod.string().nullish(),
+  address: zod.string().nullish(),
+  taxClearanceVerified: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Create company profile
+ */
+export const CreateCompanyProfileBody = zod.object({
+  name: zod.string(),
+  registrationNumber: zod.string(),
+  industry: zod.string().nullish(),
+  address: zod.string().nullish(),
+});
+
+/**
+ * @summary Update company profile
+ */
+export const UpdateCompanyProfileBody = zod.object({
+  name: zod.string().optional(),
+  registrationNumber: zod.string().optional(),
+  industry: zod.string().nullish(),
+  address: zod.string().nullish(),
+});
+
+export const UpdateCompanyProfileResponse = zod.object({
+  id: zod.number(),
+  professionalId: zod.number(),
+  name: zod.string(),
+  registrationNumber: zod.string(),
+  industry: zod.string().nullish(),
+  address: zod.string().nullish(),
+  taxClearanceVerified: zod.boolean(),
+  createdAt: zod.string(),
 });
 
 /**
@@ -667,6 +717,7 @@ export const AdminApproveProfessionalResponse = zod.object({
   bio: zod.string().nullish(),
   location: zod.string().nullish(),
   experience: zod.string().nullish(),
+  accountType: zod.enum(["individual", "company"]),
   photoUrl: zod.string().nullish(),
 });
 
