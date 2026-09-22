@@ -6,18 +6,9 @@ import { requireAuth, AuthRequest } from "../middlewares/auth";
 import { CreateQuoteBody } from "@workspace/api-zod";
 import { getFacePhotoForUser } from "../lib/photo";
 import { ensurePublicHandles } from "../lib/public-identity";
+import { calculateQuoteTotals } from "../lib/quote-totals";
 
 const router: IRouter = Router();
-
-function computeItemsTotal(items: { quantity: number; unitPrice: number }[] | undefined): number {
-  if (!items || items.length === 0) return 0;
-  return items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice), 0);
-}
-
-function computeExtrasTotal(extras: { amount: number }[] | undefined): number {
-  if (!extras || extras.length === 0) return 0;
-  return extras.reduce((sum, e) => sum + Number(e.amount), 0);
-}
 
 router.post("/", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
@@ -46,11 +37,23 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   }
 
   const body = parsed.data as any;
-  const itemsTotal = computeItemsTotal(body.items);
-  const extrasTotal = computeExtrasTotal(body.extras);
-  const discount = Number(body.discount) || 0;
-  const computedTotal = Math.max(0, itemsTotal + extrasTotal - discount);
+  const totals = calculateQuoteTotals({
+    items: body.items,
+    extras: body.extras,
+    discount: body.discount,
+    milestones: body.milestones,
+  });
+  const computedTotal = totals.total;
   const price = computedTotal > 0 ? computedTotal : (parsed.data.price ?? 0);
+  const depositAmount = Number(body.depositAmount) || 0;
+  if (depositAmount < 0 || depositAmount > price) {
+    res.status(400).json({ error: "Deposit cannot be greater than the offer total" });
+    return;
+  }
+  if ((body.milestones ?? []).length > 0 && Math.abs(totals.milestoneTotal - price) >= 0.01) {
+    res.status(400).json({ error: "Milestone amounts must add up to the offer total" });
+    return;
+  }
 
   // Enrich items with unit field if present
   const enrichedItems = (body.items ?? []).map((item: any) => ({
@@ -70,7 +73,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     pricingModel: body.pricingModel ?? "fixed_price",
     discount: body.discount ? String(body.discount) : "0",
     depositRequired: body.depositRequired ?? false,
-    depositAmount: body.depositAmount ? String(body.depositAmount) : "0",
+    depositAmount: String(depositAmount),
     extras: (body.extras ?? []).map((e: any) => ({
       description: e.description ?? "",
       amount: Number(e.amount) || 0,

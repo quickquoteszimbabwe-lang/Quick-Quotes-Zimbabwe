@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateProfessionalRequestAccountType } from "./createProfessionalRequestAccountType";
 
 export interface CreateProfessionalRequest {
   services: string[];
@@ -14,4 +15,5 @@ export interface CreateProfessionalRequest {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType?: CreateProfessionalRequestAccountType;
 }

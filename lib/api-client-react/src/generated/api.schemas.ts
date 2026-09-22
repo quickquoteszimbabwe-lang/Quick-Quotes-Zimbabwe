@@ -37,6 +37,14 @@ export interface User {
   createdAt: string;
 }
 
+export type ProfessionalAccountType =
+  (typeof ProfessionalAccountType)[keyof typeof ProfessionalAccountType];
+
+export const ProfessionalAccountType = {
+  individual: "individual",
+  company: "company",
+} as const;
+
 export interface Professional {
   id: number;
   userId: number;
@@ -51,6 +59,7 @@ export interface Professional {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType: ProfessionalAccountType;
   /** @nullable */
   photoUrl?: string | null;
 }
@@ -103,6 +112,14 @@ export interface UpdateProfileRequest {
   phone?: string | null;
 }
 
+export type CreateProfessionalRequestAccountType =
+  (typeof CreateProfessionalRequestAccountType)[keyof typeof CreateProfessionalRequestAccountType];
+
+export const CreateProfessionalRequestAccountType = {
+  individual: "individual",
+  company: "company",
+} as const;
+
 export interface CreateProfessionalRequest {
   services: string[];
   /** @nullable */
@@ -111,6 +128,7 @@ export interface CreateProfessionalRequest {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType?: CreateProfessionalRequestAccountType;
 }
 
 export interface UpdateProfessionalRequest {
@@ -121,6 +139,37 @@ export interface UpdateProfessionalRequest {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+}
+
+export interface Company {
+  id: number;
+  professionalId: number;
+  name: string;
+  registrationNumber: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
+  taxClearanceVerified: boolean;
+  createdAt: string;
+}
+
+export interface CreateCompanyRequest {
+  name: string;
+  registrationNumber: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
+}
+
+export interface UpdateCompanyRequest {
+  name?: string;
+  registrationNumber?: string;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  address?: string | null;
 }
 
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
@@ -463,6 +512,58 @@ export type AdminJobMessage = JobMessage & {
   /** @nullable */
   requestService?: string | null;
 };
+
+export interface NewsArticle {
+  id: number;
+  headline: string;
+  body: string;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  publishedAt: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RequestUploadUrlRequest {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type RequestUploadUrlResponseMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+
+export interface RequestUploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: RequestUploadUrlResponseMetadata;
+}
+
+export interface CreateNewsRequest {
+  headline: string;
+  body: string;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  publishedAt?: string | null;
+  /** @nullable */
+  active?: boolean | null;
+}
+
+export interface UpdateNewsRequest {
+  headline?: string;
+  body?: string;
+  /** @nullable */
+  imagePath?: string | null;
+  publishedAt?: string;
+  active?: boolean;
+}
 
 export interface UpdateJobRequest {
   status?: string;

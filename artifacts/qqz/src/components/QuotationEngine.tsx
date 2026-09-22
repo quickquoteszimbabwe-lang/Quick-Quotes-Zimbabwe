@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { PRICING_MODELS, getPricingModel } from "@/lib/pricingModels";
+import { calculateQuoteTotals } from "@/lib/quoteTotals";
 import { UserAvatar } from "@/components/UserAvatar";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,11 +117,12 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
   const model = getPricingModel(pricingModel);
 
   // Live totals
-  const itemsTotal = items.reduce((s, it) => s + safeNum(it.quantity) * safeNum(it.unitPrice), 0);
-  const extrasTotal = extras.reduce((s, e) => s + safeNum(e.amount), 0);
-  const subtotal = itemsTotal + extrasTotal;
-  const discountAmt = Math.min(subtotal, safeNum(discount));
-  const total = Math.max(0, subtotal - discountAmt);
+  const { itemsTotal, extrasTotal, discountAmount: discountAmt, total, milestonesMatch } = calculateQuoteTotals({
+    items,
+    extras,
+    discount,
+    milestones,
+  });
 
   function updateItem(idx: number, field: keyof LineItem, value: string) {
     setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: value } : it));
@@ -154,6 +156,10 @@ function CreateMode({ onSubmit, onCancel, isSubmitting, error }: CreateModeProps
     }
     if (total <= 0) {
       setFormError("Total must be greater than zero.");
+      return;
+    }
+    if (!milestonesMatch) {
+      setFormError(`Milestones must add up to ${formatCurrency(total)}.`);
       return;
     }
     onSubmit({ pricingModel, items, extras, discount, depositRequired, depositAmount, milestones, notes, timeline, message });
@@ -596,15 +602,14 @@ interface ViewModeProps {
 function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewModeProps) {
   const model = getPricingModel(quote.pricingModel ?? "fixed_price");
 
-  const itemsTotal = (quote.items ?? []).reduce(
-    (s: number, it: any) => s + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0), 0
-  );
-  const extrasTotal = (quote.extras ?? []).reduce(
-    (s: number, e: any) => s + (Number(e.amount) || 0), 0
-  );
-  const subtotal = itemsTotal + extrasTotal;
-  const discountAmt = Math.min(subtotal, Number(quote.discount) || 0);
-  const total = Math.max(0, subtotal - discountAmt);
+  const breakdown = calculateQuoteTotals({
+    items: quote.items,
+    extras: quote.extras,
+    discount: quote.discount,
+    milestones: quote.milestones,
+  });
+  const { itemsTotal, extrasTotal, discountAmount: discountAmt, milestoneTotal } = breakdown;
+  const total = Number(quote.price) || 0;
 
   return (
     <div className={cn(
@@ -619,9 +624,9 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
             photoUrl={quote.professionalPhotoUrl}
             size="md"
           />
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-foreground">{quote.professionalName ?? "Provider"}</span>
+              <span className="whitespace-nowrap font-bold text-foreground">{quote.professionalName ?? "Provider"}</span>
               {quote.professionalVerified && (
                 <span className="text-xs bg-secondary/10 text-secondary border border-secondary/20 px-1.5 py-0.5 rounded-full font-semibold">
                   Verified
@@ -650,32 +655,24 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
           <div className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mb-1 inline-block">
             {model.label}
           </div>
-          <div className="text-xl font-bold text-foreground">{formatCurrency(Number(quote.price))}</div>
-          <div className="text-xs text-muted-foreground">{quote.timeline}</div>
+          <div className="text-xl font-bold text-foreground">{formatCurrency(total)}</div>
+          <div className="max-w-[12rem] truncate text-xs text-muted-foreground" title={quote.timeline}>{quote.timeline}</div>
         </div>
       </div>
 
       {/* Invoice table */}
       {(quote.items ?? []).length > 0 && (
-        <div className="rounded-xl overflow-hidden border border-border">
-          <div className="grid bg-muted/60 text-muted-foreground text-[11px] font-bold uppercase tracking-wide px-3 py-2"
-            style={{ gridTemplateColumns: "1fr 48px 48px 80px 80px" }}>
-            <span>Description</span>
-            <span className="text-right">Qty</span>
-            <span className="text-right">Unit</span>
-            <span className="text-right">Rate</span>
-            <span className="text-right">Total</span>
+        <div className="rounded-xl border border-border">
+          <div className="hidden bg-muted/60 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_48px_64px_80px_80px]">
+            <span>Description</span><span className="text-right">Qty</span><span className="text-right">Unit</span><span className="text-right">Rate</span><span className="text-right">Total</span>
           </div>
           {(quote.items ?? []).map((it: any, idx: number) => (
-            <div key={idx} className="grid border-t border-border/40 px-3 py-2 text-sm"
-              style={{ gridTemplateColumns: "1fr 48px 48px 80px 80px" }}>
-              <span className="text-foreground">{it.description}</span>
-              <span className="text-right text-muted-foreground">{it.quantity}</span>
-              <span className="text-right text-muted-foreground">{it.unit || "—"}</span>
-              <span className="text-right text-muted-foreground">{formatCurrency(Number(it.unitPrice))}</span>
-              <span className="text-right font-semibold text-foreground">
-                {formatCurrency(Number(it.quantity) * Number(it.unitPrice))}
-              </span>
+            <div key={idx} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-t border-border/40 px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_48px_64px_80px_80px]">
+              <span className="min-w-0 break-words text-foreground sm:break-normal">{it.description}</span>
+              <span className="whitespace-nowrap text-right font-semibold text-foreground sm:font-normal sm:text-muted-foreground">{formatCurrency(Number(it.quantity) * Number(it.unitPrice))}</span>
+              <span className="hidden text-right text-muted-foreground sm:block">{it.quantity}</span>
+              <span className="hidden text-right text-muted-foreground sm:block">{it.unit || "—"}</span>
+              <span className="hidden text-right text-muted-foreground sm:block">{formatCurrency(Number(it.unitPrice))}</span>
             </div>
           ))}
           {/* Totals */}
@@ -699,6 +696,9 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
               <span className="font-bold text-foreground text-sm">Total</span>
               <span className="font-bold text-primary text-base">{formatCurrency(total)}</span>
             </div>
+            {breakdown.total !== total && (
+              <p className="text-[11px] leading-relaxed text-amber-700">The stored offer total is authoritative. Its item breakdown totals {formatCurrency(breakdown.total)}.</p>
+            )}
             {quote.depositRequired && Number(quote.depositAmount) > 0 && (
               <div className="flex justify-between text-xs text-amber-700 font-semibold bg-amber-50 rounded-lg px-2 py-1">
                 <span>Deposit Required</span>
@@ -719,9 +719,12 @@ function ViewMode({ quote, isSelected, canAccept, onAccept, isAccepting }: ViewM
                 <p className="text-sm font-bold text-foreground">{idx + 1}. {m.title}</p>
                 {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
               </div>
-              <span className="text-sm font-bold text-primary shrink-0 ml-3">{formatCurrency(Number(m.amount))}</span>
+              <span className="whitespace-nowrap text-sm font-bold text-primary shrink-0 ml-3">{formatCurrency(Number(m.amount))}</span>
             </div>
           ))}
+          {milestoneTotal !== total && (
+            <p className="text-[11px] leading-relaxed text-amber-700">Milestones total {formatCurrency(milestoneTotal)} against the offer total of {formatCurrency(total)}.</p>
+          )}
         </div>
       )}
 

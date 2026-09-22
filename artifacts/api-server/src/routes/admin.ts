@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { usersTable, professionalsTable, jobsTable, paymentsTable, categoriesTable, subcategoriesTable, servicesTable, jobMessagesTable, newsTable } from "@workspace/db/schema";
 import { eq, asc, desc, inArray } from "drizzle-orm";
 import { requireAuth, requireRole, AuthRequest } from "../middlewares/auth";
-import { AdminModerateMessageBody, UpdatePaymentStatusBody, CreateNewsBody, UpdateNewsBody } from "@workspace/api-zod";
+import { AdminModerateMessageBody, UpdatePaymentStatusBody, AdminCreateNewsBody, AdminUpdateNewsBody } from "@workspace/api-zod";
 import { ensurePublicHandles } from "../lib/public-identity";
 import { getFacePhotoMap } from "../lib/photo";
 import { formatNewsArticle } from "./news";
@@ -18,7 +18,7 @@ router.get("/news", async (_req, res) => {
 });
 
 router.post("/news", async (req: AuthRequest, res) => {
-  const parsed = CreateNewsBody.safeParse(req.body);
+  const parsed = AdminCreateNewsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Headline and article body are required" });
     return;
@@ -36,7 +36,7 @@ router.post("/news", async (req: AuthRequest, res) => {
 
 router.patch("/news/:id", async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
-  const parsed = UpdateNewsBody.safeParse(req.body);
+  const parsed = AdminUpdateNewsBody.safeParse(req.body);
   if (!Number.isInteger(id) || !parsed.success) {
     res.status(400).json({ error: "Invalid news update" });
     return;
@@ -47,6 +47,7 @@ router.patch("/news/:id", async (req: AuthRequest, res) => {
   if (parsed.data.imagePath !== undefined) values.imagePath = parsed.data.imagePath;
   if (parsed.data.publishedAt !== undefined) values.publishedAt = new Date(parsed.data.publishedAt);
   if (parsed.data.active !== undefined) values.active = parsed.data.active;
+  values.updatedAt = new Date();
   const [article] = await db.update(newsTable).set(values).where(eq(newsTable.id, id)).returning();
   if (!article) {
     res.status(404).json({ error: "News article not found" });
@@ -112,19 +113,19 @@ router.get("/users", async (_req, res) => {
 });
 
 router.post("/users/:id/suspend", async (req, res) => {
-  const userId = parseInt(req.params.id);
+  const userId = parseInt(String(req.params.id), 10);
   await db.update(usersTable).set({ suspended: true }).where(eq(usersTable.id, userId));
   res.json({ message: "User suspended" });
 });
 
 router.post("/users/:id/unsuspend", async (req, res) => {
-  const userId = parseInt(req.params.id);
+  const userId = parseInt(String(req.params.id), 10);
   await db.update(usersTable).set({ suspended: false }).where(eq(usersTable.id, userId));
   res.json({ message: "User unsuspended" });
 });
 
 router.post("/professionals/:id/approve", async (req, res) => {
-  const profId = parseInt(req.params.id);
+  const profId = parseInt(String(req.params.id), 10);
   const [prof] = await db.update(professionalsTable).set({ verified: true }).where(eq(professionalsTable.id, profId)).returning();
   res.json({
     id: prof.id,
@@ -179,7 +180,7 @@ router.post("/categories", async (req, res) => {
 });
 
 router.patch("/categories/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const { name, icon, active, featured, sortOrder } = req.body ?? {};
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
@@ -196,7 +197,7 @@ router.patch("/categories/:id", async (req, res) => {
 });
 
 router.delete("/categories/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   await db.delete(servicesTable).where(eq(servicesTable.categoryId, id));
   await db.delete(subcategoriesTable).where(eq(subcategoriesTable.categoryId, id));
   await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
@@ -224,7 +225,7 @@ router.post("/subcategories", async (req, res) => {
 });
 
 router.patch("/subcategories/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const { categoryId, name, active, sortOrder } = req.body ?? {};
   const updates: Record<string, unknown> = {};
   if (categoryId !== undefined) updates.categoryId = categoryId;
@@ -240,7 +241,7 @@ router.patch("/subcategories/:id", async (req, res) => {
 });
 
 router.delete("/subcategories/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   await db.update(servicesTable).set({ subcategoryId: null }).where(eq(servicesTable.subcategoryId, id));
   await db.delete(subcategoriesTable).where(eq(subcategoriesTable.id, id));
   res.json({ message: "Subcategory deleted" });
@@ -271,7 +272,7 @@ router.post("/services", async (req, res) => {
 });
 
 router.patch("/services/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const { name, description, icon, categoryId, subcategoryId, active, featured, sortOrder } = req.body ?? {};
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
@@ -291,7 +292,7 @@ router.patch("/services/:id", async (req, res) => {
 });
 
 router.delete("/services/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   await db.delete(servicesTable).where(eq(servicesTable.id, id));
   res.json({ message: "Service deleted" });
 });
@@ -310,7 +311,7 @@ router.get("/payments", async (_req, res) => {
 });
 
 router.patch("/payments/:id/status", async (req, res) => {
-  const paymentId = parseInt(req.params.id);
+  const paymentId = parseInt(String(req.params.id), 10);
   const parsed = UpdatePaymentStatusBody.safeParse(req.body);
   if (!Number.isInteger(paymentId) || !parsed.success) {
     res.status(400).json({ error: "Invalid payment status request" });
@@ -378,7 +379,7 @@ router.get("/messages", async (req, res) => {
 });
 
 router.patch("/messages/:id", async (req: AuthRequest, res) => {
-  const messageId = parseInt(req.params.id);
+  const messageId = parseInt(String(req.params.id), 10);
   const parsed = AdminModerateMessageBody.safeParse(req.body);
   if (!Number.isInteger(messageId) || !parsed.success) {
     res.status(400).json({ error: "Invalid moderation request" });

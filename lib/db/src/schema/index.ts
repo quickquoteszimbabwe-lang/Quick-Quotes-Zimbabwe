@@ -1,5 +1,6 @@
 export * from "./users";
 export * from "./professionals";
+export * from "./companies";
 export * from "./jobs";
 export * from "./quotes";
 export * from "./payments";

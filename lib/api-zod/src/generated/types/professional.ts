@@ -5,6 +5,7 @@
  * Quick Quotes Zimbabwe API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProfessionalAccountType } from "./professionalAccountType";
 
 export interface Professional {
   id: number;
@@ -20,6 +21,7 @@ export interface Professional {
   location?: string | null;
   /** @nullable */
   experience?: string | null;
+  accountType: ProfessionalAccountType;
   /** @nullable */
   photoUrl?: string | null;
 }

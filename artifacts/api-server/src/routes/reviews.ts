@@ -46,7 +46,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.get("/professional/:professionalId", requireAuth, async (req: AuthRequest, res) => {
-  const professionalId = parseInt(req.params.professionalId);
+  const professionalId = parseInt(String(req.params.professionalId), 10);
   const reviews = await db.select().from(reviewsTable).where(eq(reviewsTable.professionalId, professionalId));
 
   const customerIds = [...new Set(reviews.map(r => r.customerId))];

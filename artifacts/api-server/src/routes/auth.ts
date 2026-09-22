@@ -4,7 +4,6 @@ import { usersTable, phoneOtpsTable } from "@workspace/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { z } from "zod/v4";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { ensurePublicHandle } from "../lib/public-identity";
 

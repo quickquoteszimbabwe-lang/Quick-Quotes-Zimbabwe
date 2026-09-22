@@ -49,7 +49,7 @@ async function formatMessages(messages: typeof jobMessagesTable.$inferSelect[]) 
 }
 
 router.get("/:id/messages", requireAuth, async (req: AuthRequest, res) => {
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const { job, allowed } = await getJobForViewer(jobId, req);
   if (!job) {
     res.status(404).json({ error: "Request not found" });
@@ -74,7 +74,7 @@ router.get("/:id/messages", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.post("/:id/messages", requireAuth, async (req: AuthRequest, res) => {
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const { job, allowed } = await getJobForViewer(jobId, req);
   if (!job) {
     res.status(404).json({ error: "Request not found" });
