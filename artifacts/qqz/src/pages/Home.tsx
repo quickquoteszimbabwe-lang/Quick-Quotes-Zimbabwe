@@ -6,6 +6,7 @@ import { getCategoryIcon, getCategoryColor } from "@/lib/iconMap";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 import { formatRole } from "@/lib/pricingModels";
 import { cn } from "@/lib/utils";
+import { NewsroomPanel } from "@/components/Newsroom";
 
 const requestTypes = [
   { icon: BriefcaseBusiness, label: "Professional service", caption: "Find a skilled local pro", type: "professional_service" },
@@ -56,6 +57,8 @@ export default function Home() {
         <div className="flex items-end justify-between mb-4"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-accent">Explore the network</p><h2 className="mt-1 text-2xl text-primary">Popular categories</h2></div><Link href="/services" data-testid="link-home-all-categories" className="flex items-center gap-1 text-xs font-bold text-secondary hover:text-primary">View all <ArrowUpRight size={14} /></Link></div>
         {treeLoading ? <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[1,2,3,4].map((n) => <div key={n} className="h-32 rounded-2xl bg-muted animate-pulse" />)}</div> : <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{featured.map((cat) => { const Icon = getCategoryIcon(cat.icon); const color = getCategoryColor(cat.sortOrder); return <Link key={cat.id} href={`/services`} data-testid={`card-home-category-${cat.id}`} className={cn("qqz-hover rounded-2xl border p-4 min-h-32 flex flex-col justify-between", color.bg, color.border)}><div className="flex justify-between"><span className={cn("w-9 h-9 rounded-lg flex items-center justify-center", color.iconBg)}><Icon size={18} className={color.icon} /></span><ArrowUpRight size={15} className={color.icon} /></div><div><p className={cn("font-bold text-sm", color.icon)}>{cat.name}</p><p className="text-[11px] text-muted-foreground mt-1">{cat.services.length + cat.subcategories.reduce((sum, sub) => sum + sub.services.length, 0)} services</p></div></Link>; })}</div>}
       </section>
+
+      <NewsroomPanel />
 
       <section className="grid lg:grid-cols-[1.35fr_.65fr] gap-4">
         <div className="bg-card border border-border rounded-2xl p-5">

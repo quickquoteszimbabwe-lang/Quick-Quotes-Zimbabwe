@@ -23,6 +23,10 @@ tags:
     description: Reviews and ratings
   - name: admin
     description: Admin panel
+  - name: news
+    description: QQZ newsroom
+  - name: storage
+    description: Object storage uploads
 paths:
   /healthz:
     get:
@@ -481,6 +485,65 @@ paths:
                 items:
                   $ref: "#/components/schemas/Quote"
 
+  /news:
+    get:
+      operationId: getNews
+      tags: [news]
+      summary: List published QQZ news articles
+      responses:
+        "200":
+          description: Published news articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsArticle"
+
+  /news/{id}:
+    get:
+      operationId: getNewsArticle
+      tags: [news]
+      summary: Get a published QQZ news article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: News article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+        "404":
+          description: News article not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a direct object storage upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlRequest"
+      responses:
+        "200":
+          description: Upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+
   /payments:
     get:
       operationId: getPayments
@@ -731,6 +794,80 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobMessage"
+
+  /admin/news:
+    get:
+      operationId: adminGetNews
+      tags: [admin]
+      summary: Admin - list all news articles
+      responses:
+        "200":
+          description: All news articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsArticle"
+    post:
+      operationId: adminCreateNews
+      tags: [admin]
+      summary: Admin - publish a news article
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNewsRequest"
+      responses:
+        "201":
+          description: Published news article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+
+  /admin/news/{id}:
+    patch:
+      operationId: adminUpdateNews
+      tags: [admin]
+      summary: Admin - edit or publish/unpublish a news article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNewsRequest"
+      responses:
+        "200":
+          description: Updated news article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+    delete:
+      operationId: adminDeleteNews
+      tags: [admin]
+      summary: Admin - delete a news article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: News article deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
   /categories:
     get:
@@ -1677,6 +1814,112 @@ components:
           properties:
             requestService:
               type: ["string", "null"]
+
+    NewsArticle:
+      type: object
+      properties:
+        id:
+          type: integer
+        headline:
+          type: string
+        body:
+          type: string
+        imagePath:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        publishedAt:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - headline
+        - body
+        - publishedAt
+        - active
+        - createdAt
+        - updatedAt
+
+    RequestUploadUrlRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+      required:
+        - name
+        - size
+        - contentType
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+          required:
+            - name
+            - size
+            - contentType
+      required:
+        - uploadURL
+        - objectPath
+        - metadata
+
+    CreateNewsRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+        body:
+          type: string
+        imagePath:
+          type: ["string", "null"]
+        publishedAt:
+          type: ["string", "null"]
+          format: date-time
+        active:
+          type: ["boolean", "null"]
+      required:
+        - headline
+        - body
+
+    UpdateNewsRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+        body:
+          type: string
+        imagePath:
+          type: ["string", "null"]
+        publishedAt:
+          type: string
+          format: date-time
+        active:
+          type: boolean
 
     UpdateJobRequest:
       type: object

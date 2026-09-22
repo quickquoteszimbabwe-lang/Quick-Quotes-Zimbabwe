@@ -26,6 +26,7 @@ import type {
   CreateCategoryRequest,
   CreateCompanyRequest,
   CreateJobRequest,
+  CreateNewsRequest,
   CreatePaymentRequest,
   CreateProfessionalRequest,
   CreateQuoteRequest,
@@ -45,10 +46,13 @@ import type {
   MessageInput,
   MessageResponse,
   ModerateMessageRequest,
+  NewsArticle,
   Payment,
   Professional,
   Quote,
   RegisterRequest,
+  RequestUploadUrlRequest,
+  RequestUploadUrlResponse,
   Review,
   SelectQuoteRequest,
   Service,
@@ -56,6 +60,7 @@ import type {
   UpdateCategoryRequest,
   UpdateCompanyRequest,
   UpdateJobRequest,
+  UpdateNewsRequest,
   UpdatePaymentStatusRequest,
   UpdateProfessionalRequest,
   UpdateProfileRequest,
@@ -1962,6 +1967,246 @@ export function useGetMyQuotes<
 }
 
 /**
+ * @summary List published QQZ news articles
+ */
+export const getGetNewsUrl = () => {
+  return `/api/news`;
+};
+
+export const getNews = async (
+  options?: RequestInit,
+): Promise<NewsArticle[]> => {
+  return customFetch<NewsArticle[]>(getGetNewsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetNewsQueryKey = () => {
+  return [`/api/news`] as const;
+};
+
+export const getGetNewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getNews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getNews>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetNewsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getNews>>> = ({
+    signal,
+  }) => getNews({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getNews>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetNewsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getNews>>
+>;
+export type GetNewsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List published QQZ news articles
+ */
+
+export function useGetNews<
+  TData = Awaited<ReturnType<typeof getNews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getNews>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetNewsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a published QQZ news article
+ */
+export const getGetNewsArticleUrl = (id: number) => {
+  return `/api/news/${id}`;
+};
+
+export const getNewsArticle = async (
+  id: number,
+  options?: RequestInit,
+): Promise<NewsArticle> => {
+  return customFetch<NewsArticle>(getGetNewsArticleUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetNewsArticleQueryKey = (id: number) => {
+  return [`/api/news/${id}`] as const;
+};
+
+export const getGetNewsArticleQueryOptions = <
+  TData = Awaited<ReturnType<typeof getNewsArticle>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getNewsArticle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetNewsArticleQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getNewsArticle>>> = ({
+    signal,
+  }) => getNewsArticle(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getNewsArticle>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetNewsArticleQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getNewsArticle>>
+>;
+export type GetNewsArticleQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a published QQZ news article
+ */
+
+export function useGetNewsArticle<
+  TData = Awaited<ReturnType<typeof getNewsArticle>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getNewsArticle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetNewsArticleQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Request a direct object storage upload URL
+ */
+export const getRequestUploadUrlUrl = () => {
+  return `/api/storage/uploads/request-url`;
+};
+
+export const requestUploadUrl = async (
+  requestUploadUrlRequest: RequestUploadUrlRequest,
+  options?: RequestInit,
+): Promise<RequestUploadUrlResponse> => {
+  return customFetch<RequestUploadUrlResponse>(getRequestUploadUrlUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(requestUploadUrlRequest),
+  });
+};
+
+export const getRequestUploadUrlMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlRequest> },
+  TContext
+> => {
+  const mutationKey = ["requestUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    { data: BodyType<RequestUploadUrlRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestUploadUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestUploadUrl>>
+>;
+export type RequestUploadUrlMutationBody = BodyType<RequestUploadUrlRequest>;
+export type RequestUploadUrlMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Request a direct object storage upload URL
+ */
+export const useRequestUploadUrl = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlRequest> },
+  TContext
+> => {
+  return useMutation(getRequestUploadUrlMutationOptions(options));
+};
+
+/**
  * @summary List payments for current user
  */
 export const getGetPaymentsUrl = () => {
@@ -3047,6 +3292,338 @@ export const useAdminModerateMessage = <
   TContext
 > => {
   return useMutation(getAdminModerateMessageMutationOptions(options));
+};
+
+/**
+ * @summary Admin - list all news articles
+ */
+export const getAdminGetNewsUrl = () => {
+  return `/api/admin/news`;
+};
+
+export const adminGetNews = async (
+  options?: RequestInit,
+): Promise<NewsArticle[]> => {
+  return customFetch<NewsArticle[]>(getAdminGetNewsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminGetNewsQueryKey = () => {
+  return [`/api/admin/news`] as const;
+};
+
+export const getAdminGetNewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetNews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetNews>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminGetNewsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetNews>>> = ({
+    signal,
+  }) => adminGetNews({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetNews>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetNewsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetNews>>
+>;
+export type AdminGetNewsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - list all news articles
+ */
+
+export function useAdminGetNews<
+  TData = Awaited<ReturnType<typeof adminGetNews>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetNews>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetNewsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin - publish a news article
+ */
+export const getAdminCreateNewsUrl = () => {
+  return `/api/admin/news`;
+};
+
+export const adminCreateNews = async (
+  createNewsRequest: CreateNewsRequest,
+  options?: RequestInit,
+): Promise<NewsArticle> => {
+  return customFetch<NewsArticle>(getAdminCreateNewsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createNewsRequest),
+  });
+};
+
+export const getAdminCreateNewsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateNews>>,
+    TError,
+    { data: BodyType<CreateNewsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCreateNews>>,
+  TError,
+  { data: BodyType<CreateNewsRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminCreateNews"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCreateNews>>,
+    { data: BodyType<CreateNewsRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminCreateNews(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminCreateNewsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCreateNews>>
+>;
+export type AdminCreateNewsMutationBody = BodyType<CreateNewsRequest>;
+export type AdminCreateNewsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - publish a news article
+ */
+export const useAdminCreateNews = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateNews>>,
+    TError,
+    { data: BodyType<CreateNewsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminCreateNews>>,
+  TError,
+  { data: BodyType<CreateNewsRequest> },
+  TContext
+> => {
+  return useMutation(getAdminCreateNewsMutationOptions(options));
+};
+
+/**
+ * @summary Admin - edit or publish/unpublish a news article
+ */
+export const getAdminUpdateNewsUrl = (id: number) => {
+  return `/api/admin/news/${id}`;
+};
+
+export const adminUpdateNews = async (
+  id: number,
+  updateNewsRequest: UpdateNewsRequest,
+  options?: RequestInit,
+): Promise<NewsArticle> => {
+  return customFetch<NewsArticle>(getAdminUpdateNewsUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateNewsRequest),
+  });
+};
+
+export const getAdminUpdateNewsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateNews>>,
+    TError,
+    { id: number; data: BodyType<UpdateNewsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdateNews>>,
+  TError,
+  { id: number; data: BodyType<UpdateNewsRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdateNews"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdateNews>>,
+    { id: number; data: BodyType<UpdateNewsRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUpdateNews(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdateNewsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdateNews>>
+>;
+export type AdminUpdateNewsMutationBody = BodyType<UpdateNewsRequest>;
+export type AdminUpdateNewsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - edit or publish/unpublish a news article
+ */
+export const useAdminUpdateNews = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateNews>>,
+    TError,
+    { id: number; data: BodyType<UpdateNewsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdateNews>>,
+  TError,
+  { id: number; data: BodyType<UpdateNewsRequest> },
+  TContext
+> => {
+  return useMutation(getAdminUpdateNewsMutationOptions(options));
+};
+
+/**
+ * @summary Admin - delete a news article
+ */
+export const getAdminDeleteNewsUrl = (id: number) => {
+  return `/api/admin/news/${id}`;
+};
+
+export const adminDeleteNews = async (
+  id: number,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getAdminDeleteNewsUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getAdminDeleteNewsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteNews>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDeleteNews>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["adminDeleteNews"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDeleteNews>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminDeleteNews(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDeleteNewsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDeleteNews>>
+>;
+
+export type AdminDeleteNewsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - delete a news article
+ */
+export const useAdminDeleteNews = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteNews>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDeleteNews>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getAdminDeleteNewsMutationOptions(options));
 };
 
 /**

@@ -56,7 +56,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.patch("/:id/status", requireAuth, async (req: AuthRequest, res) => {
-  const paymentId = parseInt(req.params.id);
+  const paymentId = parseInt(String(req.params.id), 10);
   const parsed = UpdatePaymentStatusBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });

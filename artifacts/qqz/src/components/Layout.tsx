@@ -110,10 +110,10 @@ export function Layout({ children }: LayoutProps) {
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-border z-50 px-1 py-2">
         <div className="flex justify-around">
-          {navItems.slice(0, 5).map(({ href, icon: Icon, label }) => (
+          {[...navItems.slice(0, 4), { href: "/more", icon: LayoutGrid, label: "More" }].map(({ href, icon: Icon, label }) => (
             <Link key={href} href={href} data-testid={`link-mobile-nav-${label.toLowerCase().replace(/\s+/g, "-")}`} className={cn("flex min-w-[58px] flex-col items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors", active(href) ? "text-primary" : "text-muted-foreground")}>
               <Icon size={19} strokeWidth={active(href) ? 2.4 : 1.7} />
-              {label.split(" ")[0]}
+              <span className="whitespace-nowrap">{label}</span>
             </Link>
           ))}
         </div>

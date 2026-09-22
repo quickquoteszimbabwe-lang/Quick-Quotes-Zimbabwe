@@ -513,6 +513,58 @@ export type AdminJobMessage = JobMessage & {
   requestService?: string | null;
 };
 
+export interface NewsArticle {
+  id: number;
+  headline: string;
+  body: string;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  publishedAt: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RequestUploadUrlRequest {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type RequestUploadUrlResponseMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+
+export interface RequestUploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: RequestUploadUrlResponseMetadata;
+}
+
+export interface CreateNewsRequest {
+  headline: string;
+  body: string;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  publishedAt?: string | null;
+  /** @nullable */
+  active?: boolean | null;
+}
+
+export interface UpdateNewsRequest {
+  headline?: string;
+  body?: string;
+  /** @nullable */
+  imagePath?: string | null;
+  publishedAt?: string;
+  active?: boolean;
+}
+
 export interface UpdateJobRequest {
   status?: string;
   /** @nullable */

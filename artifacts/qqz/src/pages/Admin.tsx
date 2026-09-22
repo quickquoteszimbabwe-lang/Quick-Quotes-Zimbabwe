@@ -19,8 +19,9 @@ import {
 import { Users, Briefcase, CreditCard, CheckCircle, Ban, ShieldCheck, RotateCcw, Tags, Plus, Pencil, Trash2, X, Star, MessageCircle } from "lucide-react";
 import { formatDate, formatCurrency, getStatusColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import AdminNewsTab from "@/components/AdminNewsTab";
 
-type Tab = "users" | "jobs" | "payments" | "messages" | "services";
+type Tab = "users" | "jobs" | "payments" | "messages" | "services" | "news";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("users");
@@ -62,7 +63,7 @@ export default function Admin() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-         {(["users", "jobs", "payments", "messages", "services"] as Tab[]).map(t => (
+          {(["users", "jobs", "payments", "messages", "services", "news"] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -249,6 +250,7 @@ export default function Admin() {
       )}
 
       {tab === "services" && <ServicesTab />}
+      {tab === "news" && <AdminNewsTab />}
     </div>
   );
 }

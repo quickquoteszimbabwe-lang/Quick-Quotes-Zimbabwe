@@ -22,6 +22,8 @@ import Verify from "@/pages/Verify";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 import WorkspaceHub from "@/pages/WorkspaceHub";
+import More from "@/pages/More";
+import NewsArticlePage, { NewsListingPage } from "@/components/Newsroom";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -72,6 +74,7 @@ function AppRoutes() {
       "/services": { title: "Browse services | QQZ Zimbabwe", description: "Browse verified service categories and find the right provider for your next request." },
       "/login": { title: "Sign in | QQZ", description: "Sign in to your QQZ account to manage requests, offers, payments and bookings." },
       "/register": { title: "Create your QQZ account", description: "Join QQZ as a client or provider and use one account across the website and mobile app." },
+      "/news": { title: "QQZ newsroom | Practical updates from Zimbabwe's marketplace", description: "Read practical marketplace guidance, updates and stories from Quick Quotes Zimbabwe." },
     };
     const current = meta[path] ?? { title: "QQZ | Quick Quotes Zimbabwe", description: "A trusted marketplace for services, requests, listings and bookings in Zimbabwe." };
     document.title = current.title;
@@ -107,6 +110,12 @@ function AppRoutes() {
       </Route>
       <Route path="/home">
         <ProtectedRoute component={Home} />
+      </Route>
+      <Route path="/news">
+        {user ? <Layout><NewsListingPage /></Layout> : <NewsListingPage />}
+      </Route>
+      <Route path="/news/:id">
+        {user ? <Layout><NewsArticlePage /></Layout> : <NewsArticlePage />}
       </Route>
       <Route path="/services">
         {user ? <Layout><Services /></Layout> : <Services />}
@@ -175,6 +184,9 @@ function AppRoutes() {
       </Route>
       <Route path="/saved">
         <ProtectedRoute component={() => <WorkspaceHub section="saved" />} />
+      </Route>
+      <Route path="/more">
+        <ProtectedRoute component={More} />
       </Route>
       <Route path="/settings">
         <ProtectedRoute component={() => <WorkspaceHub section="settings" />} />

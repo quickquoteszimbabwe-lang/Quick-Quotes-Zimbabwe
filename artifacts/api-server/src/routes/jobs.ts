@@ -118,7 +118,7 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
   if (!job) {
     res.status(404).json({ error: "Request not found" });
@@ -232,7 +232,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req: AuthRequest, res) => {
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const parsed = UpdateJobBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -254,7 +254,7 @@ router.patch("/:id", requireAuth, async (req: AuthRequest, res) => {
 
 router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const parsed = SelectQuoteBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -289,7 +289,7 @@ router.post("/:id/select-quote", requireAuth, async (req: AuthRequest, res) => {
 
 router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
-  const jobId = parseInt(req.params.id);
+  const jobId = parseInt(String(req.params.id), 10);
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
   if (!job || job.customerId !== userId) {
     res.status(403).json({ error: "Forbidden" });

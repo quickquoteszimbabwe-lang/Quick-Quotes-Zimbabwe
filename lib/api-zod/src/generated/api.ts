@@ -600,6 +600,60 @@ export const GetMyQuotesResponseItem = zod.object({
 export const GetMyQuotesResponse = zod.array(GetMyQuotesResponseItem);
 
 /**
+ * @summary List published QQZ news articles
+ */
+export const GetNewsResponseItem = zod.object({
+  id: zod.number(),
+  headline: zod.string(),
+  body: zod.string(),
+  imagePath: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  publishedAt: zod.date(),
+  active: zod.boolean(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const GetNewsResponse = zod.array(GetNewsResponseItem);
+
+/**
+ * @summary Get a published QQZ news article
+ */
+export const GetNewsArticleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetNewsArticleResponse = zod.object({
+  id: zod.number(),
+  headline: zod.string(),
+  body: zod.string(),
+  imagePath: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  publishedAt: zod.date(),
+  active: zod.boolean(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Request a direct object storage upload URL
+ */
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string(),
+  size: zod.number(),
+  contentType: zod.string(),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string().url(),
+  objectPath: zod.string(),
+  metadata: zod.object({
+    name: zod.string(),
+    size: zod.number(),
+    contentType: zod.string(),
+  }),
+});
+
+/**
  * @summary List payments for current user
  */
 export const GetPaymentsResponseItem = zod.object({
@@ -828,6 +882,71 @@ export const AdminModerateMessageResponse = zod.object({
   body: zod.string(),
   moderationStatus: zod.enum(["visible", "hidden"]),
   createdAt: zod.string(),
+});
+
+/**
+ * @summary Admin - list all news articles
+ */
+export const AdminGetNewsResponseItem = zod.object({
+  id: zod.number(),
+  headline: zod.string(),
+  body: zod.string(),
+  imagePath: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  publishedAt: zod.date(),
+  active: zod.boolean(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const AdminGetNewsResponse = zod.array(AdminGetNewsResponseItem);
+
+/**
+ * @summary Admin - publish a news article
+ */
+export const AdminCreateNewsBody = zod.object({
+  headline: zod.string(),
+  body: zod.string(),
+  imagePath: zod.string().nullish(),
+  publishedAt: zod.date().nullish(),
+  active: zod.boolean().nullish(),
+});
+
+/**
+ * @summary Admin - edit or publish/unpublish a news article
+ */
+export const AdminUpdateNewsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdateNewsBody = zod.object({
+  headline: zod.string().optional(),
+  body: zod.string().optional(),
+  imagePath: zod.string().nullish(),
+  publishedAt: zod.date().optional(),
+  active: zod.boolean().optional(),
+});
+
+export const AdminUpdateNewsResponse = zod.object({
+  id: zod.number(),
+  headline: zod.string(),
+  body: zod.string(),
+  imagePath: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  publishedAt: zod.date(),
+  active: zod.boolean(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Admin - delete a news article
+ */
+export const AdminDeleteNewsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminDeleteNewsResponse = zod.object({
+  message: zod.string(),
 });
 
 /**
