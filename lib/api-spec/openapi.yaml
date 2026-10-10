@@ -1163,6 +1163,513 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /entities/mine:
+    get:
+      operationId: getMyEntities
+      tags: [entities]
+      summary: List entities available to the current account
+      responses:
+        "200":
+          description: Entity workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityWorkspace"
+
+  /entities:
+    post:
+      operationId: createEntity
+      tags: [entities]
+      summary: Create a distinct entity profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityInput"
+      responses:
+        "201":
+          description: Entity profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityWorkspace"
+        "400":
+          description: Invalid entity data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /entities/{id}/public:
+    get:
+      operationId: getPublicEntity
+      tags: [entities]
+      summary: Get a public entity profile and its exact verified scopes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Public entity information and currently valid badges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicEntity"
+
+  /entities/{id}/members:
+    get:
+      operationId: getEntityMembers
+      tags: [entities]
+      summary: List members and invitations for an entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Entity memberships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityMembership"
+    post:
+      operationId: inviteEntityMember
+      tags: [entities]
+      summary: Invite an account to an entity with a defined membership
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityMemberInvitationInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityMembership"
+
+  /entities/{id}/members/{membershipId}:
+    delete:
+      operationId: revokeEntityMember
+      tags: [entities]
+      summary: Revoke a member or cancel an invitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Membership revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /entities/invitations:
+    get:
+      operationId: getMyEntityInvitations
+      tags: [entities]
+      summary: List invitations addressed to the current account
+      responses:
+        "200":
+          description: Pending invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityMembership"
+
+  /entities/invitations/{id}/accept:
+    post:
+      operationId: acceptEntityInvitation
+      tags: [entities]
+      summary: Accept an entity invitation addressed to the current account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityMembership"
+
+  /entities/{id}/affiliations:
+    post:
+      operationId: createCompanyAffiliation
+      tags: [entities]
+      summary: Link an individual professional profile to a company
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyAffiliationInput"
+      responses:
+        "201":
+          description: Company affiliation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyAffiliation"
+
+  /entities/{id}/verification-records:
+    get:
+      operationId: getEntityVerificationRecords
+      tags: [verification]
+      summary: List the entity's verification records without confidential files
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Entity verification records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VerificationRecord"
+    post:
+      operationId: createEntityVerification
+      tags: [verification]
+      summary: Request verification of a specific entity or document scope
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationInput"
+      responses:
+        "201":
+          description: Verification request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationRecord"
+
+  /entities/{id}/verification-records/{recordId}/appeal:
+    post:
+      operationId: appealVerificationDecision
+      tags: [verification]
+      summary: Appeal a rejected verification decision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationAppealInput"
+      responses:
+        "201":
+          description: Appeal submitted for QQZ review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /verification/records/{id}/evidence:
+    post:
+      operationId: addVerificationEvidence
+      tags: [verification]
+      summary: Attach privately stored evidence to a verification request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationEvidenceInput"
+      responses:
+        "201":
+          description: Evidence metadata saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationEvidence"
+
+  /verification/records/{id}/evidence/{evidenceId}:
+    get:
+      operationId: downloadVerificationEvidence
+      tags: [verification]
+      summary: Download evidence after an access check
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Private evidence file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Not authorized to access this evidence
+
+  /verification/partner/records:
+    get:
+      operationId: getPartnerVerificationRecords
+      tags: [verification]
+      summary: List cases assigned to the current approved partner
+      responses:
+        "200":
+          description: Assigned verification cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VerificationRecord"
+
+  /verification/partner/records/{id}/result:
+    post:
+      operationId: submitPartnerVerificationResult
+      tags: [verification]
+      summary: Submit a partner recommendation for an assigned case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerVerificationResultInput"
+      responses:
+        "200":
+          description: Result submitted for QQZ review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationRecord"
+
+  /verification/public/{code}:
+    get:
+      operationId: getPublicVerification
+      tags: [verification]
+      summary: Publicly check a QQZ verification ID without exposing documents
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Safe verification status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicVerification"
+        "404":
+          description: Verification ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/verification/records:
+    get:
+      operationId: adminGetVerificationRecords
+      tags: [admin]
+      summary: List verification cases for QQZ administration
+      responses:
+        "200":
+          description: Verification cases and private workflow metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminVerificationRecord"
+
+  /admin/verification/records/{id}/assign:
+    patch:
+      operationId: adminAssignVerification
+      tags: [admin]
+      summary: Assign a case to an approved partner within its country and scope
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationAssignmentInput"
+      responses:
+        "200":
+          description: Case assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationRecord"
+
+  /admin/verification/records/{id}/decision:
+    patch:
+      operationId: adminDecideVerification
+      tags: [admin]
+      summary: Approve or reject a partner result and close the review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationDecisionInput"
+      responses:
+        "200":
+          description: Final verification decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationRecord"
+
+  /admin/verification/records/{id}/appeal:
+    patch:
+      operationId: adminDecideVerificationAppeal
+      tags: [admin]
+      summary: Accept or reject a verification appeal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationAppealDecisionInput"
+      responses:
+        "200":
+          description: Appeal decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /admin/verification/partners:
+    get:
+      operationId: adminGetVerificationPartners
+      tags: [admin]
+      summary: List verification partner applications and approval status
+      responses:
+        "200":
+          description: Verification partner applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminVerificationPartner"
+
+  /admin/verification/partners/{id}/decision:
+    patch:
+      operationId: adminDecideVerificationPartner
+      tags: [admin]
+      summary: Approve or reject a partner application after QQZ checks its basis and agreement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationPartnerDecisionInput"
+      responses:
+        "200":
+          description: Partner application decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminVerificationPartner"
+
 components:
   schemas:
     HealthStatus:
@@ -2227,3 +2734,500 @@ components:
         - jobId
         - professionalId
         - rating
+
+    VerificationAppealInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 20
+          maxLength: 3000
+      required: [message]
+
+    VerificationAppealDecisionInput:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [accepted, rejected]
+        notes:
+          type: string
+          maxLength: 3000
+      required: [decision]
+
+    EntityInput:
+      type: object
+      properties:
+        entityType:
+          type: string
+          enum: [individual_professional, company_business, asset_owner, verification_partner]
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+        registrationNumber:
+          type: string
+          maxLength: 120
+        industry:
+          type: string
+          maxLength: 160
+        address:
+          type: string
+          maxLength: 500
+        authorizingBody:
+          type: string
+          maxLength: 200
+        authorizationBasis:
+          type: string
+          maxLength: 2000
+        scopeTypes:
+          type: array
+          items:
+            type: string
+            enum: [identity, company_registration, business_document, professional_qualification, professional_certification, document_attestation, director_representative, ownership_document]
+      required:
+        - entityType
+        - displayName
+
+    EntityWorkspace:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityType:
+          type: string
+          enum: [individual_professional, company_business, asset_owner, verification_partner]
+        displayName:
+          type: string
+        description:
+          type: ["string", "null"]
+        countryCode:
+          type: string
+        status:
+          type: string
+        membershipRole:
+          type: string
+        createdAt:
+          type: string
+        registrationNumber:
+          type: ["string", "null"]
+        industry:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        partnerStatus:
+          type: ["string", "null"]
+        agreementStatus:
+          type: ["string", "null"]
+        authorizingBody:
+          type: ["string", "null"]
+        authorizationBasis:
+          type: ["string", "null"]
+        scopeTypes:
+          type: array
+          items:
+            type: string
+        affiliations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyAffiliation"
+      required: [id, entityType, displayName, description, countryCode, status, membershipRole, createdAt, registrationNumber, industry, address, partnerStatus, agreementStatus, authorizingBody, authorizationBasis, scopeTypes, affiliations]
+
+    PublicEntity:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityType:
+          type: string
+          enum: [individual_professional, company_business, asset_owner, verification_partner]
+        displayName:
+          type: string
+        description:
+          type: ["string", "null"]
+        countryCode:
+          type: string
+        badges:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerificationBadge"
+      required: [id, entityType, displayName, description, countryCode, badges]
+
+    EntityMemberInvitationInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        membershipRole:
+          type: string
+          enum: [employee, director, representative, affiliated_professional, verifier]
+      required: [email, membershipRole]
+
+    EntityMembership:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityId:
+          type: integer
+        entityName:
+          type: ["string", "null"]
+        userId:
+          type: ["integer", "null"]
+        email:
+          type: string
+        membershipRole:
+          type: string
+        status:
+          type: string
+          enum: [invited, active, revoked]
+        invitedBy:
+          type: integer
+        acceptedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, entityId, entityName, userId, email, membershipRole, status, invitedBy, acceptedAt, createdAt]
+
+    CompanyAffiliationInput:
+      type: object
+      properties:
+        individualEntityId:
+          type: integer
+        relationshipType:
+          type: string
+          enum: [employee, director, representative, affiliated_professional]
+      required: [individualEntityId, relationshipType]
+
+    CompanyAffiliation:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyEntityId:
+          type: integer
+        individualEntityId:
+          type: integer
+        individualName:
+          type: string
+        userId:
+          type: integer
+        relationshipType:
+          type: string
+        status:
+          type: string
+      required: [id, companyEntityId, individualEntityId, individualName, userId, relationshipType, status]
+
+    VerificationInput:
+      type: object
+      properties:
+        verificationType:
+          type: string
+          enum: [identity, company_registration, business_document, professional_qualification, professional_certification, document_attestation, director_representative, ownership_document]
+        reviewAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [verificationType]
+
+    VerificationEvidenceInput:
+      type: object
+      properties:
+        objectPath:
+          type: string
+          minLength: 9
+          maxLength: 500
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+        mimeType:
+          type: string
+          maxLength: 120
+        byteSize:
+          type: integer
+          minimum: 1
+          maximum: 15000000
+      required: [objectPath, fileName, mimeType, byteSize]
+
+    VerificationEvidence:
+      type: object
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        byteSize:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, fileName, mimeType, byteSize, createdAt]
+
+    VerificationRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityId:
+          type: integer
+        entityName:
+          type: ["string", "null"]
+        verificationType:
+          type: string
+        countryCode:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, UNDER_REVIEW, VERIFIED, REJECTED, EXPIRED, REVOKED]
+        verificationCode:
+          type: ["string", "null"]
+        assignedPartnerOrganization:
+          type: ["string", "null"]
+        verifiedAt:
+          type: ["string", "null"]
+        reviewAt:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerificationEvidence"
+      required: [id, entityId, entityName, verificationType, countryCode, status, verificationCode, assignedPartnerOrganization, verifiedAt, reviewAt, expiresAt, createdAt, evidence]
+
+    VerificationBadge:
+      type: object
+      properties:
+        verificationType:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+          enum: [VERIFIED]
+        verificationCode:
+          type: string
+        verifiedAt:
+          type: string
+        expiresAt:
+          type: ["string", "null"]
+      required: [verificationType, label, status, verificationCode, verifiedAt, expiresAt]
+
+    PublicVerification:
+      type: object
+      properties:
+        verificationCode:
+          type: string
+        entityType:
+          type: string
+        entityName:
+          type: string
+        countryCode:
+          type: string
+        verificationType:
+          type: string
+        status:
+          type: string
+          enum: [VERIFIED, EXPIRED, REVOKED]
+        verifiedAt:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+        verifierOrganization:
+          type: ["string", "null"]
+      required: [verificationCode, entityType, entityName, countryCode, verificationType, status, verifiedAt, expiresAt, verifierOrganization]
+
+    PartnerVerificationCase:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityId:
+          type: integer
+        entityName:
+          type: string
+        entityType:
+          type: string
+        verificationType:
+          type: string
+        countryCode:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, UNDER_REVIEW, VERIFIED, REJECTED, EXPIRED, REVOKED]
+        notes:
+          type: ["string", "null"]
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerificationEvidence"
+        createdAt:
+          type: string
+      required: [id, entityId, entityName, entityType, verificationType, countryCode, status, notes, evidence, createdAt]
+
+    PartnerVerificationResultInput:
+      type: object
+      properties:
+        result:
+          type: string
+          enum: [VERIFIED, REJECTED]
+        notes:
+          type: string
+          maxLength: 3000
+      required: [result, notes]
+
+    AdminVerificationRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityId:
+          type: integer
+        entityName:
+          type: string
+        entityType:
+          type: string
+        verificationType:
+          type: string
+        countryCode:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, UNDER_REVIEW, VERIFIED, REJECTED, EXPIRED, REVOKED]
+        verificationCode:
+          type: ["string", "null"]
+        assignedPartnerEntityId:
+          type: ["integer", "null"]
+        assignedPartnerOrganization:
+          type: ["string", "null"]
+        partnerResult:
+          type: ["string", "null"]
+        partnerNotes:
+          type: ["string", "null"]
+        verifierOrganization:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        verifiedAt:
+          type: ["string", "null"]
+        reviewAt:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerificationEvidence"
+        audit:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerificationAuditEntry"
+      required: [id, entityId, entityName, entityType, verificationType, countryCode, status, verificationCode, assignedPartnerEntityId, assignedPartnerOrganization, partnerResult, partnerNotes, verifierOrganization, notes, verifiedAt, reviewAt, expiresAt, createdAt, evidence, audit]
+
+    VerificationAuditEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        actorId:
+          type: ["integer", "null"]
+        action:
+          type: string
+        previousStatus:
+          type: ["string", "null"]
+        newStatus:
+          type: ["string", "null"]
+        details:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+      required: [id, actorId, action, previousStatus, newStatus, details, createdAt]
+
+    VerificationAssignmentInput:
+      type: object
+      properties:
+        partnerEntityId:
+          type: integer
+        notes:
+          type: string
+          maxLength: 2000
+      required: [partnerEntityId]
+
+    VerificationDecisionInput:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [VERIFIED, REJECTED, REVOKED]
+        notes:
+          type: string
+          maxLength: 3000
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        reviewAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [decision]
+
+    AdminVerificationPartner:
+      type: object
+      properties:
+        id:
+          type: integer
+        entityId:
+          type: integer
+        entityName:
+          type: string
+        countryCode:
+          type: string
+        authorizingBody:
+          type: string
+        authorizationBasis:
+          type: string
+        scopeTypes:
+          type: array
+          items:
+            type: string
+        agreementStatus:
+          type: string
+          enum: [pending, signed, expired]
+        status:
+          type: string
+          enum: [pending, approved, rejected, suspended]
+        validUntil:
+          type: ["string", "null"]
+        submittedBy:
+          type: integer
+      required: [id, entityId, entityName, countryCode, authorizingBody, authorizationBasis, scopeTypes, agreementStatus, status, validUntil, submittedBy]
+
+    VerificationPartnerDecisionInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, suspended]
+        agreementStatus:
+          type: string
+          enum: [signed, pending, expired]
+        agreementReference:
+          type: string
+          maxLength: 300
+        validUntil:
+          type: ["string", "null"]
+          format: date-time
+      required: [status, agreementStatus]
