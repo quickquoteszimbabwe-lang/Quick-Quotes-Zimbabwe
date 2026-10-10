@@ -13,3 +13,4 @@ export * from "./services";
 export * from "./job-photos";
 export * from "./job-messages";
 export * from "./news";
+export * from "./entities";

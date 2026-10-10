@@ -664,6 +664,512 @@ export interface CreateReviewRequest {
   comment?: string | null;
 }
 
+export interface VerificationAppealInput {
+  /**
+   * @minLength 20
+   * @maxLength 3000
+   */
+  message: string;
+}
+
+export type VerificationAppealDecisionInputDecision =
+  (typeof VerificationAppealDecisionInputDecision)[keyof typeof VerificationAppealDecisionInputDecision];
+
+export const VerificationAppealDecisionInputDecision = {
+  accepted: "accepted",
+  rejected: "rejected",
+} as const;
+
+export interface VerificationAppealDecisionInput {
+  decision: VerificationAppealDecisionInputDecision;
+  /** @maxLength 3000 */
+  notes?: string;
+}
+
+export type EntityInputEntityType =
+  (typeof EntityInputEntityType)[keyof typeof EntityInputEntityType];
+
+export const EntityInputEntityType = {
+  individual_professional: "individual_professional",
+  company_business: "company_business",
+  asset_owner: "asset_owner",
+  verification_partner: "verification_partner",
+} as const;
+
+export type EntityInputScopeTypesItem =
+  (typeof EntityInputScopeTypesItem)[keyof typeof EntityInputScopeTypesItem];
+
+export const EntityInputScopeTypesItem = {
+  identity: "identity",
+  company_registration: "company_registration",
+  business_document: "business_document",
+  professional_qualification: "professional_qualification",
+  professional_certification: "professional_certification",
+  document_attestation: "document_attestation",
+  director_representative: "director_representative",
+  ownership_document: "ownership_document",
+} as const;
+
+export interface EntityInput {
+  entityType: EntityInputEntityType;
+  /**
+   * @minLength 2
+   * @maxLength 160
+   */
+  displayName: string;
+  /** @maxLength 2000 */
+  description?: string;
+  /**
+   * @minLength 2
+   * @maxLength 2
+   */
+  countryCode?: string;
+  /** @maxLength 120 */
+  registrationNumber?: string;
+  /** @maxLength 160 */
+  industry?: string;
+  /** @maxLength 500 */
+  address?: string;
+  /** @maxLength 200 */
+  authorizingBody?: string;
+  /** @maxLength 2000 */
+  authorizationBasis?: string;
+  scopeTypes?: EntityInputScopeTypesItem[];
+}
+
+export type EntityWorkspaceEntityType =
+  (typeof EntityWorkspaceEntityType)[keyof typeof EntityWorkspaceEntityType];
+
+export const EntityWorkspaceEntityType = {
+  individual_professional: "individual_professional",
+  company_business: "company_business",
+  asset_owner: "asset_owner",
+  verification_partner: "verification_partner",
+} as const;
+
+export interface CompanyAffiliation {
+  id: number;
+  companyEntityId: number;
+  individualEntityId: number;
+  individualName: string;
+  userId: number;
+  relationshipType: string;
+  status: string;
+}
+
+export interface EntityWorkspace {
+  id: number;
+  entityType: EntityWorkspaceEntityType;
+  displayName: string;
+  /** @nullable */
+  description: string | null;
+  countryCode: string;
+  status: string;
+  membershipRole: string;
+  createdAt: string;
+  /** @nullable */
+  registrationNumber: string | null;
+  /** @nullable */
+  industry: string | null;
+  /** @nullable */
+  address: string | null;
+  /** @nullable */
+  partnerStatus: string | null;
+  /** @nullable */
+  agreementStatus: string | null;
+  /** @nullable */
+  authorizingBody: string | null;
+  /** @nullable */
+  authorizationBasis: string | null;
+  scopeTypes: string[];
+  affiliations: CompanyAffiliation[];
+}
+
+export type PublicEntityEntityType =
+  (typeof PublicEntityEntityType)[keyof typeof PublicEntityEntityType];
+
+export const PublicEntityEntityType = {
+  individual_professional: "individual_professional",
+  company_business: "company_business",
+  asset_owner: "asset_owner",
+  verification_partner: "verification_partner",
+} as const;
+
+export type VerificationBadgeStatus =
+  (typeof VerificationBadgeStatus)[keyof typeof VerificationBadgeStatus];
+
+export const VerificationBadgeStatus = {
+  VERIFIED: "VERIFIED",
+} as const;
+
+export interface VerificationBadge {
+  verificationType: string;
+  label: string;
+  status: VerificationBadgeStatus;
+  verificationCode: string;
+  verifiedAt: string;
+  /** @nullable */
+  expiresAt: string | null;
+}
+
+export interface PublicEntity {
+  id: number;
+  entityType: PublicEntityEntityType;
+  displayName: string;
+  /** @nullable */
+  description: string | null;
+  countryCode: string;
+  badges: VerificationBadge[];
+}
+
+export type EntityMemberInvitationInputMembershipRole =
+  (typeof EntityMemberInvitationInputMembershipRole)[keyof typeof EntityMemberInvitationInputMembershipRole];
+
+export const EntityMemberInvitationInputMembershipRole = {
+  employee: "employee",
+  director: "director",
+  representative: "representative",
+  affiliated_professional: "affiliated_professional",
+  verifier: "verifier",
+} as const;
+
+export interface EntityMemberInvitationInput {
+  email: string;
+  membershipRole: EntityMemberInvitationInputMembershipRole;
+}
+
+export type EntityMembershipStatus =
+  (typeof EntityMembershipStatus)[keyof typeof EntityMembershipStatus];
+
+export const EntityMembershipStatus = {
+  invited: "invited",
+  active: "active",
+  revoked: "revoked",
+} as const;
+
+export interface EntityMembership {
+  id: number;
+  entityId: number;
+  /** @nullable */
+  entityName: string | null;
+  /** @nullable */
+  userId: number | null;
+  email: string;
+  membershipRole: string;
+  status: EntityMembershipStatus;
+  invitedBy: number;
+  /** @nullable */
+  acceptedAt: string | null;
+  createdAt: string;
+}
+
+export type CompanyAffiliationInputRelationshipType =
+  (typeof CompanyAffiliationInputRelationshipType)[keyof typeof CompanyAffiliationInputRelationshipType];
+
+export const CompanyAffiliationInputRelationshipType = {
+  employee: "employee",
+  director: "director",
+  representative: "representative",
+  affiliated_professional: "affiliated_professional",
+} as const;
+
+export interface CompanyAffiliationInput {
+  individualEntityId: number;
+  relationshipType: CompanyAffiliationInputRelationshipType;
+}
+
+export type VerificationInputVerificationType =
+  (typeof VerificationInputVerificationType)[keyof typeof VerificationInputVerificationType];
+
+export const VerificationInputVerificationType = {
+  identity: "identity",
+  company_registration: "company_registration",
+  business_document: "business_document",
+  professional_qualification: "professional_qualification",
+  professional_certification: "professional_certification",
+  document_attestation: "document_attestation",
+  director_representative: "director_representative",
+  ownership_document: "ownership_document",
+} as const;
+
+export interface VerificationInput {
+  verificationType: VerificationInputVerificationType;
+  /** @nullable */
+  reviewAt?: string | null;
+}
+
+export interface VerificationEvidenceInput {
+  /**
+   * @minLength 9
+   * @maxLength 500
+   */
+  objectPath: string;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  fileName: string;
+  /** @maxLength 120 */
+  mimeType: string;
+  /**
+   * @minimum 1
+   * @maximum 15000000
+   */
+  byteSize: number;
+}
+
+export interface VerificationEvidence {
+  id: number;
+  fileName: string;
+  mimeType: string;
+  byteSize: number;
+  createdAt: string;
+}
+
+export type VerificationRecordStatus =
+  (typeof VerificationRecordStatus)[keyof typeof VerificationRecordStatus];
+
+export const VerificationRecordStatus = {
+  PENDING: "PENDING",
+  UNDER_REVIEW: "UNDER_REVIEW",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+  EXPIRED: "EXPIRED",
+  REVOKED: "REVOKED",
+} as const;
+
+export interface VerificationRecord {
+  id: number;
+  entityId: number;
+  /** @nullable */
+  entityName: string | null;
+  verificationType: string;
+  countryCode: string;
+  status: VerificationRecordStatus;
+  /** @nullable */
+  verificationCode: string | null;
+  /** @nullable */
+  assignedPartnerOrganization: string | null;
+  /** @nullable */
+  verifiedAt: string | null;
+  /** @nullable */
+  reviewAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  evidence: VerificationEvidence[];
+}
+
+export type PublicVerificationStatus =
+  (typeof PublicVerificationStatus)[keyof typeof PublicVerificationStatus];
+
+export const PublicVerificationStatus = {
+  VERIFIED: "VERIFIED",
+  EXPIRED: "EXPIRED",
+  REVOKED: "REVOKED",
+} as const;
+
+export interface PublicVerification {
+  verificationCode: string;
+  entityType: string;
+  entityName: string;
+  countryCode: string;
+  verificationType: string;
+  status: PublicVerificationStatus;
+  /** @nullable */
+  verifiedAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  /** @nullable */
+  verifierOrganization: string | null;
+}
+
+export type PartnerVerificationCaseStatus =
+  (typeof PartnerVerificationCaseStatus)[keyof typeof PartnerVerificationCaseStatus];
+
+export const PartnerVerificationCaseStatus = {
+  PENDING: "PENDING",
+  UNDER_REVIEW: "UNDER_REVIEW",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+  EXPIRED: "EXPIRED",
+  REVOKED: "REVOKED",
+} as const;
+
+export interface PartnerVerificationCase {
+  id: number;
+  entityId: number;
+  entityName: string;
+  entityType: string;
+  verificationType: string;
+  countryCode: string;
+  status: PartnerVerificationCaseStatus;
+  /** @nullable */
+  notes: string | null;
+  evidence: VerificationEvidence[];
+  createdAt: string;
+}
+
+export type PartnerVerificationResultInputResult =
+  (typeof PartnerVerificationResultInputResult)[keyof typeof PartnerVerificationResultInputResult];
+
+export const PartnerVerificationResultInputResult = {
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+} as const;
+
+export interface PartnerVerificationResultInput {
+  result: PartnerVerificationResultInputResult;
+  /** @maxLength 3000 */
+  notes: string;
+}
+
+export type AdminVerificationRecordStatus =
+  (typeof AdminVerificationRecordStatus)[keyof typeof AdminVerificationRecordStatus];
+
+export const AdminVerificationRecordStatus = {
+  PENDING: "PENDING",
+  UNDER_REVIEW: "UNDER_REVIEW",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+  EXPIRED: "EXPIRED",
+  REVOKED: "REVOKED",
+} as const;
+
+export type VerificationAuditEntryDetails = { [key: string]: unknown };
+
+export interface VerificationAuditEntry {
+  id: number;
+  /** @nullable */
+  actorId: number | null;
+  action: string;
+  /** @nullable */
+  previousStatus: string | null;
+  /** @nullable */
+  newStatus: string | null;
+  details: VerificationAuditEntryDetails;
+  createdAt: string;
+}
+
+export interface AdminVerificationRecord {
+  id: number;
+  entityId: number;
+  entityName: string;
+  entityType: string;
+  verificationType: string;
+  countryCode: string;
+  status: AdminVerificationRecordStatus;
+  /** @nullable */
+  verificationCode: string | null;
+  /** @nullable */
+  assignedPartnerEntityId: number | null;
+  /** @nullable */
+  assignedPartnerOrganization: string | null;
+  /** @nullable */
+  partnerResult: string | null;
+  /** @nullable */
+  partnerNotes: string | null;
+  /** @nullable */
+  verifierOrganization: string | null;
+  /** @nullable */
+  notes: string | null;
+  /** @nullable */
+  verifiedAt: string | null;
+  /** @nullable */
+  reviewAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  evidence: VerificationEvidence[];
+  audit: VerificationAuditEntry[];
+}
+
+export interface VerificationAssignmentInput {
+  partnerEntityId: number;
+  /** @maxLength 2000 */
+  notes?: string;
+}
+
+export type VerificationDecisionInputDecision =
+  (typeof VerificationDecisionInputDecision)[keyof typeof VerificationDecisionInputDecision];
+
+export const VerificationDecisionInputDecision = {
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+  REVOKED: "REVOKED",
+} as const;
+
+export interface VerificationDecisionInput {
+  decision: VerificationDecisionInputDecision;
+  /** @maxLength 3000 */
+  notes?: string;
+  /** @nullable */
+  expiresAt?: string | null;
+  /** @nullable */
+  reviewAt?: string | null;
+}
+
+export type AdminVerificationPartnerAgreementStatus =
+  (typeof AdminVerificationPartnerAgreementStatus)[keyof typeof AdminVerificationPartnerAgreementStatus];
+
+export const AdminVerificationPartnerAgreementStatus = {
+  pending: "pending",
+  signed: "signed",
+  expired: "expired",
+} as const;
+
+export type AdminVerificationPartnerStatus =
+  (typeof AdminVerificationPartnerStatus)[keyof typeof AdminVerificationPartnerStatus];
+
+export const AdminVerificationPartnerStatus = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  suspended: "suspended",
+} as const;
+
+export interface AdminVerificationPartner {
+  id: number;
+  entityId: number;
+  entityName: string;
+  countryCode: string;
+  authorizingBody: string;
+  authorizationBasis: string;
+  scopeTypes: string[];
+  agreementStatus: AdminVerificationPartnerAgreementStatus;
+  status: AdminVerificationPartnerStatus;
+  /** @nullable */
+  validUntil: string | null;
+  submittedBy: number;
+}
+
+export type VerificationPartnerDecisionInputStatus =
+  (typeof VerificationPartnerDecisionInputStatus)[keyof typeof VerificationPartnerDecisionInputStatus];
+
+export const VerificationPartnerDecisionInputStatus = {
+  approved: "approved",
+  rejected: "rejected",
+  suspended: "suspended",
+} as const;
+
+export type VerificationPartnerDecisionInputAgreementStatus =
+  (typeof VerificationPartnerDecisionInputAgreementStatus)[keyof typeof VerificationPartnerDecisionInputAgreementStatus];
+
+export const VerificationPartnerDecisionInputAgreementStatus = {
+  signed: "signed",
+  pending: "pending",
+  expired: "expired",
+} as const;
+
+export interface VerificationPartnerDecisionInput {
+  status: VerificationPartnerDecisionInputStatus;
+  agreementStatus: VerificationPartnerDecisionInputAgreementStatus;
+  /** @maxLength 300 */
+  agreementReference?: string;
+  /** @nullable */
+  validUntil?: string | null;
+}
+
 export type GetJobsParams = {
   status?: string;
   category?: string;

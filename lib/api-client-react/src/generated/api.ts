@@ -19,10 +19,14 @@ import type {
 import type {
   AdminGetMessagesParams,
   AdminJobMessage,
+  AdminVerificationPartner,
+  AdminVerificationRecord,
   AuthResponse,
   Category,
   CategoryTreeNode,
   Company,
+  CompanyAffiliation,
+  CompanyAffiliationInput,
   CreateCategoryRequest,
   CreateCompanyRequest,
   CreateJobRequest,
@@ -33,6 +37,10 @@ import type {
   CreateReviewRequest,
   CreateServiceRequest,
   CreateSubcategoryRequest,
+  EntityInput,
+  EntityMemberInvitationInput,
+  EntityMembership,
+  EntityWorkspace,
   ErrorResponse,
   GetCategoriesParams,
   GetCategoryTreeParams,
@@ -47,8 +55,11 @@ import type {
   MessageResponse,
   ModerateMessageRequest,
   NewsArticle,
+  PartnerVerificationResultInput,
   Payment,
   Professional,
+  PublicEntity,
+  PublicVerification,
   Quote,
   RegisterRequest,
   RequestUploadUrlRequest,
@@ -68,6 +79,15 @@ import type {
   UpdateSubcategoryRequest,
   User,
   UserProfile,
+  VerificationAppealDecisionInput,
+  VerificationAppealInput,
+  VerificationAssignmentInput,
+  VerificationDecisionInput,
+  VerificationEvidence,
+  VerificationEvidenceInput,
+  VerificationInput,
+  VerificationPartnerDecisionInput,
+  VerificationRecord,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4904,4 +4924,2005 @@ export const useAdminDeleteService = <
   TContext
 > => {
   return useMutation(getAdminDeleteServiceMutationOptions(options));
+};
+
+/**
+ * @summary List entities available to the current account
+ */
+export const getGetMyEntitiesUrl = () => {
+  return `/api/entities/mine`;
+};
+
+export const getMyEntities = async (
+  options?: RequestInit,
+): Promise<EntityWorkspace[]> => {
+  return customFetch<EntityWorkspace[]>(getGetMyEntitiesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyEntitiesQueryKey = () => {
+  return [`/api/entities/mine`] as const;
+};
+
+export const getGetMyEntitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyEntities>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntities>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyEntitiesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyEntities>>> = ({
+    signal,
+  }) => getMyEntities({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntities>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyEntitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyEntities>>
+>;
+export type GetMyEntitiesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List entities available to the current account
+ */
+
+export function useGetMyEntities<
+  TData = Awaited<ReturnType<typeof getMyEntities>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntities>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyEntitiesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a distinct entity profile
+ */
+export const getCreateEntityUrl = () => {
+  return `/api/entities`;
+};
+
+export const createEntity = async (
+  entityInput: EntityInput,
+  options?: RequestInit,
+): Promise<EntityWorkspace> => {
+  return customFetch<EntityWorkspace>(getCreateEntityUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(entityInput),
+  });
+};
+
+export const getCreateEntityMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEntity>>,
+    TError,
+    { data: BodyType<EntityInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEntity>>,
+  TError,
+  { data: BodyType<EntityInput> },
+  TContext
+> => {
+  const mutationKey = ["createEntity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEntity>>,
+    { data: BodyType<EntityInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createEntity(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEntityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createEntity>>
+>;
+export type CreateEntityMutationBody = BodyType<EntityInput>;
+export type CreateEntityMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a distinct entity profile
+ */
+export const useCreateEntity = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEntity>>,
+    TError,
+    { data: BodyType<EntityInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createEntity>>,
+  TError,
+  { data: BodyType<EntityInput> },
+  TContext
+> => {
+  return useMutation(getCreateEntityMutationOptions(options));
+};
+
+/**
+ * @summary Get a public entity profile and its exact verified scopes
+ */
+export const getGetPublicEntityUrl = (id: number) => {
+  return `/api/entities/${id}/public`;
+};
+
+export const getPublicEntity = async (
+  id: number,
+  options?: RequestInit,
+): Promise<PublicEntity> => {
+  return customFetch<PublicEntity>(getGetPublicEntityUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicEntityQueryKey = (id: number) => {
+  return [`/api/entities/${id}/public`] as const;
+};
+
+export const getGetPublicEntityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicEntity>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicEntity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicEntityQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicEntity>>> = ({
+    signal,
+  }) => getPublicEntity(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicEntity>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicEntityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicEntity>>
+>;
+export type GetPublicEntityQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a public entity profile and its exact verified scopes
+ */
+
+export function useGetPublicEntity<
+  TData = Awaited<ReturnType<typeof getPublicEntity>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicEntity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicEntityQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List members and invitations for an entity
+ */
+export const getGetEntityMembersUrl = (id: number) => {
+  return `/api/entities/${id}/members`;
+};
+
+export const getEntityMembers = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EntityMembership[]> => {
+  return customFetch<EntityMembership[]>(getGetEntityMembersUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetEntityMembersQueryKey = (id: number) => {
+  return [`/api/entities/${id}/members`] as const;
+};
+
+export const getGetEntityMembersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEntityMembers>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEntityMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEntityMembersQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getEntityMembers>>
+  > = ({ signal }) => getEntityMembers(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEntityMembers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetEntityMembersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEntityMembers>>
+>;
+export type GetEntityMembersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List members and invitations for an entity
+ */
+
+export function useGetEntityMembers<
+  TData = Awaited<ReturnType<typeof getEntityMembers>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEntityMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEntityMembersQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Invite an account to an entity with a defined membership
+ */
+export const getInviteEntityMemberUrl = (id: number) => {
+  return `/api/entities/${id}/members`;
+};
+
+export const inviteEntityMember = async (
+  id: number,
+  entityMemberInvitationInput: EntityMemberInvitationInput,
+  options?: RequestInit,
+): Promise<EntityMembership> => {
+  return customFetch<EntityMembership>(getInviteEntityMemberUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(entityMemberInvitationInput),
+  });
+};
+
+export const getInviteEntityMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteEntityMember>>,
+    TError,
+    { id: number; data: BodyType<EntityMemberInvitationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof inviteEntityMember>>,
+  TError,
+  { id: number; data: BodyType<EntityMemberInvitationInput> },
+  TContext
+> => {
+  const mutationKey = ["inviteEntityMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof inviteEntityMember>>,
+    { id: number; data: BodyType<EntityMemberInvitationInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return inviteEntityMember(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InviteEntityMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof inviteEntityMember>>
+>;
+export type InviteEntityMemberMutationBody =
+  BodyType<EntityMemberInvitationInput>;
+export type InviteEntityMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Invite an account to an entity with a defined membership
+ */
+export const useInviteEntityMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteEntityMember>>,
+    TError,
+    { id: number; data: BodyType<EntityMemberInvitationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof inviteEntityMember>>,
+  TError,
+  { id: number; data: BodyType<EntityMemberInvitationInput> },
+  TContext
+> => {
+  return useMutation(getInviteEntityMemberMutationOptions(options));
+};
+
+/**
+ * @summary Revoke a member or cancel an invitation
+ */
+export const getRevokeEntityMemberUrl = (id: number, membershipId: number) => {
+  return `/api/entities/${id}/members/${membershipId}`;
+};
+
+export const revokeEntityMember = async (
+  id: number,
+  membershipId: number,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(
+    getRevokeEntityMemberUrl(id, membershipId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getRevokeEntityMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeEntityMember>>,
+    TError,
+    { id: number; membershipId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeEntityMember>>,
+  TError,
+  { id: number; membershipId: number },
+  TContext
+> => {
+  const mutationKey = ["revokeEntityMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeEntityMember>>,
+    { id: number; membershipId: number }
+  > = (props) => {
+    const { id, membershipId } = props ?? {};
+
+    return revokeEntityMember(id, membershipId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeEntityMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof revokeEntityMember>>
+>;
+
+export type RevokeEntityMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Revoke a member or cancel an invitation
+ */
+export const useRevokeEntityMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeEntityMember>>,
+    TError,
+    { id: number; membershipId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof revokeEntityMember>>,
+  TError,
+  { id: number; membershipId: number },
+  TContext
+> => {
+  return useMutation(getRevokeEntityMemberMutationOptions(options));
+};
+
+/**
+ * @summary List invitations addressed to the current account
+ */
+export const getGetMyEntityInvitationsUrl = () => {
+  return `/api/entities/invitations`;
+};
+
+export const getMyEntityInvitations = async (
+  options?: RequestInit,
+): Promise<EntityMembership[]> => {
+  return customFetch<EntityMembership[]>(getGetMyEntityInvitationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyEntityInvitationsQueryKey = () => {
+  return [`/api/entities/invitations`] as const;
+};
+
+export const getGetMyEntityInvitationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyEntityInvitations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntityInvitations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMyEntityInvitationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMyEntityInvitations>>
+  > = ({ signal }) => getMyEntityInvitations({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntityInvitations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyEntityInvitationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyEntityInvitations>>
+>;
+export type GetMyEntityInvitationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List invitations addressed to the current account
+ */
+
+export function useGetMyEntityInvitations<
+  TData = Awaited<ReturnType<typeof getMyEntityInvitations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEntityInvitations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyEntityInvitationsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Accept an entity invitation addressed to the current account
+ */
+export const getAcceptEntityInvitationUrl = (id: number) => {
+  return `/api/entities/invitations/${id}/accept`;
+};
+
+export const acceptEntityInvitation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EntityMembership> => {
+  return customFetch<EntityMembership>(getAcceptEntityInvitationUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAcceptEntityInvitationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptEntityInvitation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptEntityInvitation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["acceptEntityInvitation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptEntityInvitation>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return acceptEntityInvitation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptEntityInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptEntityInvitation>>
+>;
+
+export type AcceptEntityInvitationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Accept an entity invitation addressed to the current account
+ */
+export const useAcceptEntityInvitation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptEntityInvitation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptEntityInvitation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getAcceptEntityInvitationMutationOptions(options));
+};
+
+/**
+ * @summary Link an individual professional profile to a company
+ */
+export const getCreateCompanyAffiliationUrl = (id: number) => {
+  return `/api/entities/${id}/affiliations`;
+};
+
+export const createCompanyAffiliation = async (
+  id: number,
+  companyAffiliationInput: CompanyAffiliationInput,
+  options?: RequestInit,
+): Promise<CompanyAffiliation> => {
+  return customFetch<CompanyAffiliation>(getCreateCompanyAffiliationUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(companyAffiliationInput),
+  });
+};
+
+export const getCreateCompanyAffiliationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCompanyAffiliation>>,
+    TError,
+    { id: number; data: BodyType<CompanyAffiliationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCompanyAffiliation>>,
+  TError,
+  { id: number; data: BodyType<CompanyAffiliationInput> },
+  TContext
+> => {
+  const mutationKey = ["createCompanyAffiliation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCompanyAffiliation>>,
+    { id: number; data: BodyType<CompanyAffiliationInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createCompanyAffiliation(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCompanyAffiliationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCompanyAffiliation>>
+>;
+export type CreateCompanyAffiliationMutationBody =
+  BodyType<CompanyAffiliationInput>;
+export type CreateCompanyAffiliationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Link an individual professional profile to a company
+ */
+export const useCreateCompanyAffiliation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCompanyAffiliation>>,
+    TError,
+    { id: number; data: BodyType<CompanyAffiliationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCompanyAffiliation>>,
+  TError,
+  { id: number; data: BodyType<CompanyAffiliationInput> },
+  TContext
+> => {
+  return useMutation(getCreateCompanyAffiliationMutationOptions(options));
+};
+
+/**
+ * @summary List the entity's verification records without confidential files
+ */
+export const getGetEntityVerificationRecordsUrl = (id: number) => {
+  return `/api/entities/${id}/verification-records`;
+};
+
+export const getEntityVerificationRecords = async (
+  id: number,
+  options?: RequestInit,
+): Promise<VerificationRecord[]> => {
+  return customFetch<VerificationRecord[]>(
+    getGetEntityVerificationRecordsUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetEntityVerificationRecordsQueryKey = (id: number) => {
+  return [`/api/entities/${id}/verification-records`] as const;
+};
+
+export const getGetEntityVerificationRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEntityVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEntityVerificationRecords>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetEntityVerificationRecordsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getEntityVerificationRecords>>
+  > = ({ signal }) =>
+    getEntityVerificationRecords(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEntityVerificationRecords>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetEntityVerificationRecordsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEntityVerificationRecords>>
+>;
+export type GetEntityVerificationRecordsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List the entity's verification records without confidential files
+ */
+
+export function useGetEntityVerificationRecords<
+  TData = Awaited<ReturnType<typeof getEntityVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEntityVerificationRecords>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEntityVerificationRecordsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Request verification of a specific entity or document scope
+ */
+export const getCreateEntityVerificationUrl = (id: number) => {
+  return `/api/entities/${id}/verification-records`;
+};
+
+export const createEntityVerification = async (
+  id: number,
+  verificationInput: VerificationInput,
+  options?: RequestInit,
+): Promise<VerificationRecord> => {
+  return customFetch<VerificationRecord>(getCreateEntityVerificationUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(verificationInput),
+  });
+};
+
+export const getCreateEntityVerificationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEntityVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEntityVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationInput> },
+  TContext
+> => {
+  const mutationKey = ["createEntityVerification"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEntityVerification>>,
+    { id: number; data: BodyType<VerificationInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createEntityVerification(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEntityVerificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createEntityVerification>>
+>;
+export type CreateEntityVerificationMutationBody = BodyType<VerificationInput>;
+export type CreateEntityVerificationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Request verification of a specific entity or document scope
+ */
+export const useCreateEntityVerification = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEntityVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createEntityVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationInput> },
+  TContext
+> => {
+  return useMutation(getCreateEntityVerificationMutationOptions(options));
+};
+
+/**
+ * @summary Appeal a rejected verification decision
+ */
+export const getAppealVerificationDecisionUrl = (
+  id: number,
+  recordId: number,
+) => {
+  return `/api/entities/${id}/verification-records/${recordId}/appeal`;
+};
+
+export const appealVerificationDecision = async (
+  id: number,
+  recordId: number,
+  verificationAppealInput: VerificationAppealInput,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(
+    getAppealVerificationDecisionUrl(id, recordId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(verificationAppealInput),
+    },
+  );
+};
+
+export const getAppealVerificationDecisionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof appealVerificationDecision>>,
+    TError,
+    { id: number; recordId: number; data: BodyType<VerificationAppealInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof appealVerificationDecision>>,
+  TError,
+  { id: number; recordId: number; data: BodyType<VerificationAppealInput> },
+  TContext
+> => {
+  const mutationKey = ["appealVerificationDecision"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof appealVerificationDecision>>,
+    { id: number; recordId: number; data: BodyType<VerificationAppealInput> }
+  > = (props) => {
+    const { id, recordId, data } = props ?? {};
+
+    return appealVerificationDecision(id, recordId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AppealVerificationDecisionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof appealVerificationDecision>>
+>;
+export type AppealVerificationDecisionMutationBody =
+  BodyType<VerificationAppealInput>;
+export type AppealVerificationDecisionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Appeal a rejected verification decision
+ */
+export const useAppealVerificationDecision = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof appealVerificationDecision>>,
+    TError,
+    { id: number; recordId: number; data: BodyType<VerificationAppealInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof appealVerificationDecision>>,
+  TError,
+  { id: number; recordId: number; data: BodyType<VerificationAppealInput> },
+  TContext
+> => {
+  return useMutation(getAppealVerificationDecisionMutationOptions(options));
+};
+
+/**
+ * @summary Attach privately stored evidence to a verification request
+ */
+export const getAddVerificationEvidenceUrl = (id: number) => {
+  return `/api/verification/records/${id}/evidence`;
+};
+
+export const addVerificationEvidence = async (
+  id: number,
+  verificationEvidenceInput: VerificationEvidenceInput,
+  options?: RequestInit,
+): Promise<VerificationEvidence> => {
+  return customFetch<VerificationEvidence>(getAddVerificationEvidenceUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(verificationEvidenceInput),
+  });
+};
+
+export const getAddVerificationEvidenceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addVerificationEvidence>>,
+    TError,
+    { id: number; data: BodyType<VerificationEvidenceInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addVerificationEvidence>>,
+  TError,
+  { id: number; data: BodyType<VerificationEvidenceInput> },
+  TContext
+> => {
+  const mutationKey = ["addVerificationEvidence"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addVerificationEvidence>>,
+    { id: number; data: BodyType<VerificationEvidenceInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addVerificationEvidence(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddVerificationEvidenceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addVerificationEvidence>>
+>;
+export type AddVerificationEvidenceMutationBody =
+  BodyType<VerificationEvidenceInput>;
+export type AddVerificationEvidenceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Attach privately stored evidence to a verification request
+ */
+export const useAddVerificationEvidence = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addVerificationEvidence>>,
+    TError,
+    { id: number; data: BodyType<VerificationEvidenceInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addVerificationEvidence>>,
+  TError,
+  { id: number; data: BodyType<VerificationEvidenceInput> },
+  TContext
+> => {
+  return useMutation(getAddVerificationEvidenceMutationOptions(options));
+};
+
+/**
+ * @summary Download evidence after an access check
+ */
+export const getDownloadVerificationEvidenceUrl = (
+  id: number,
+  evidenceId: number,
+) => {
+  return `/api/verification/records/${id}/evidence/${evidenceId}`;
+};
+
+export const downloadVerificationEvidence = async (
+  id: number,
+  evidenceId: number,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getDownloadVerificationEvidenceUrl(id, evidenceId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDownloadVerificationEvidenceQueryKey = (
+  id: number,
+  evidenceId: number,
+) => {
+  return [`/api/verification/records/${id}/evidence/${evidenceId}`] as const;
+};
+
+export const getDownloadVerificationEvidenceQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadVerificationEvidence>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  evidenceId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadVerificationEvidence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getDownloadVerificationEvidenceQueryKey(id, evidenceId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof downloadVerificationEvidence>>
+  > = ({ signal }) =>
+    downloadVerificationEvidence(id, evidenceId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(id && evidenceId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadVerificationEvidence>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadVerificationEvidenceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadVerificationEvidence>>
+>;
+export type DownloadVerificationEvidenceQueryError = ErrorType<void>;
+
+/**
+ * @summary Download evidence after an access check
+ */
+
+export function useDownloadVerificationEvidence<
+  TData = Awaited<ReturnType<typeof downloadVerificationEvidence>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  evidenceId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadVerificationEvidence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadVerificationEvidenceQueryOptions(
+    id,
+    evidenceId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List cases assigned to the current approved partner
+ */
+export const getGetPartnerVerificationRecordsUrl = () => {
+  return `/api/verification/partner/records`;
+};
+
+export const getPartnerVerificationRecords = async (
+  options?: RequestInit,
+): Promise<VerificationRecord[]> => {
+  return customFetch<VerificationRecord[]>(
+    getGetPartnerVerificationRecordsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetPartnerVerificationRecordsQueryKey = () => {
+  return [`/api/verification/partner/records`] as const;
+};
+
+export const getGetPartnerVerificationRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPartnerVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerVerificationRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPartnerVerificationRecordsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPartnerVerificationRecords>>
+  > = ({ signal }) =>
+    getPartnerVerificationRecords({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerVerificationRecords>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPartnerVerificationRecordsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPartnerVerificationRecords>>
+>;
+export type GetPartnerVerificationRecordsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List cases assigned to the current approved partner
+ */
+
+export function useGetPartnerVerificationRecords<
+  TData = Awaited<ReturnType<typeof getPartnerVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerVerificationRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPartnerVerificationRecordsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit a partner recommendation for an assigned case
+ */
+export const getSubmitPartnerVerificationResultUrl = (id: number) => {
+  return `/api/verification/partner/records/${id}/result`;
+};
+
+export const submitPartnerVerificationResult = async (
+  id: number,
+  partnerVerificationResultInput: PartnerVerificationResultInput,
+  options?: RequestInit,
+): Promise<VerificationRecord> => {
+  return customFetch<VerificationRecord>(
+    getSubmitPartnerVerificationResultUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(partnerVerificationResultInput),
+    },
+  );
+};
+
+export const getSubmitPartnerVerificationResultMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitPartnerVerificationResult>>,
+    TError,
+    { id: number; data: BodyType<PartnerVerificationResultInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitPartnerVerificationResult>>,
+  TError,
+  { id: number; data: BodyType<PartnerVerificationResultInput> },
+  TContext
+> => {
+  const mutationKey = ["submitPartnerVerificationResult"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitPartnerVerificationResult>>,
+    { id: number; data: BodyType<PartnerVerificationResultInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return submitPartnerVerificationResult(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitPartnerVerificationResultMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitPartnerVerificationResult>>
+>;
+export type SubmitPartnerVerificationResultMutationBody =
+  BodyType<PartnerVerificationResultInput>;
+export type SubmitPartnerVerificationResultMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit a partner recommendation for an assigned case
+ */
+export const useSubmitPartnerVerificationResult = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitPartnerVerificationResult>>,
+    TError,
+    { id: number; data: BodyType<PartnerVerificationResultInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitPartnerVerificationResult>>,
+  TError,
+  { id: number; data: BodyType<PartnerVerificationResultInput> },
+  TContext
+> => {
+  return useMutation(
+    getSubmitPartnerVerificationResultMutationOptions(options),
+  );
+};
+
+/**
+ * @summary Publicly check a QQZ verification ID without exposing documents
+ */
+export const getGetPublicVerificationUrl = (code: string) => {
+  return `/api/verification/public/${code}`;
+};
+
+export const getPublicVerification = async (
+  code: string,
+  options?: RequestInit,
+): Promise<PublicVerification> => {
+  return customFetch<PublicVerification>(getGetPublicVerificationUrl(code), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicVerificationQueryKey = (code: string) => {
+  return [`/api/verification/public/${code}`] as const;
+};
+
+export const getGetPublicVerificationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicVerification>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicVerification>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPublicVerificationQueryKey(code);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPublicVerification>>
+  > = ({ signal }) =>
+    getPublicVerification(code, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!code,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicVerification>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicVerificationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicVerification>>
+>;
+export type GetPublicVerificationQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Publicly check a QQZ verification ID without exposing documents
+ */
+
+export function useGetPublicVerification<
+  TData = Awaited<ReturnType<typeof getPublicVerification>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicVerification>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicVerificationQueryOptions(code, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List verification cases for QQZ administration
+ */
+export const getAdminGetVerificationRecordsUrl = () => {
+  return `/api/admin/verification/records`;
+};
+
+export const adminGetVerificationRecords = async (
+  options?: RequestInit,
+): Promise<AdminVerificationRecord[]> => {
+  return customFetch<AdminVerificationRecord[]>(
+    getAdminGetVerificationRecordsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminGetVerificationRecordsQueryKey = () => {
+  return [`/api/admin/verification/records`] as const;
+};
+
+export const getAdminGetVerificationRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminGetVerificationRecordsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminGetVerificationRecords>>
+  > = ({ signal }) =>
+    adminGetVerificationRecords({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationRecords>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetVerificationRecordsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetVerificationRecords>>
+>;
+export type AdminGetVerificationRecordsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List verification cases for QQZ administration
+ */
+
+export function useAdminGetVerificationRecords<
+  TData = Awaited<ReturnType<typeof adminGetVerificationRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetVerificationRecordsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Assign a case to an approved partner within its country and scope
+ */
+export const getAdminAssignVerificationUrl = (id: number) => {
+  return `/api/admin/verification/records/${id}/assign`;
+};
+
+export const adminAssignVerification = async (
+  id: number,
+  verificationAssignmentInput: VerificationAssignmentInput,
+  options?: RequestInit,
+): Promise<VerificationRecord> => {
+  return customFetch<VerificationRecord>(getAdminAssignVerificationUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(verificationAssignmentInput),
+  });
+};
+
+export const getAdminAssignVerificationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminAssignVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationAssignmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminAssignVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationAssignmentInput> },
+  TContext
+> => {
+  const mutationKey = ["adminAssignVerification"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminAssignVerification>>,
+    { id: number; data: BodyType<VerificationAssignmentInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminAssignVerification(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminAssignVerificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminAssignVerification>>
+>;
+export type AdminAssignVerificationMutationBody =
+  BodyType<VerificationAssignmentInput>;
+export type AdminAssignVerificationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Assign a case to an approved partner within its country and scope
+ */
+export const useAdminAssignVerification = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminAssignVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationAssignmentInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminAssignVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationAssignmentInput> },
+  TContext
+> => {
+  return useMutation(getAdminAssignVerificationMutationOptions(options));
+};
+
+/**
+ * @summary Approve or reject a partner result and close the review
+ */
+export const getAdminDecideVerificationUrl = (id: number) => {
+  return `/api/admin/verification/records/${id}/decision`;
+};
+
+export const adminDecideVerification = async (
+  id: number,
+  verificationDecisionInput: VerificationDecisionInput,
+  options?: RequestInit,
+): Promise<VerificationRecord> => {
+  return customFetch<VerificationRecord>(getAdminDecideVerificationUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(verificationDecisionInput),
+  });
+};
+
+export const getAdminDecideVerificationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDecideVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationDecisionInput> },
+  TContext
+> => {
+  const mutationKey = ["adminDecideVerification"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDecideVerification>>,
+    { id: number; data: BodyType<VerificationDecisionInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminDecideVerification(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDecideVerificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDecideVerification>>
+>;
+export type AdminDecideVerificationMutationBody =
+  BodyType<VerificationDecisionInput>;
+export type AdminDecideVerificationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Approve or reject a partner result and close the review
+ */
+export const useAdminDecideVerification = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerification>>,
+    TError,
+    { id: number; data: BodyType<VerificationDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDecideVerification>>,
+  TError,
+  { id: number; data: BodyType<VerificationDecisionInput> },
+  TContext
+> => {
+  return useMutation(getAdminDecideVerificationMutationOptions(options));
+};
+
+/**
+ * @summary Accept or reject a verification appeal
+ */
+export const getAdminDecideVerificationAppealUrl = (id: number) => {
+  return `/api/admin/verification/records/${id}/appeal`;
+};
+
+export const adminDecideVerificationAppeal = async (
+  id: number,
+  verificationAppealDecisionInput: VerificationAppealDecisionInput,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getAdminDecideVerificationAppealUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(verificationAppealDecisionInput),
+  });
+};
+
+export const getAdminDecideVerificationAppealMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerificationAppeal>>,
+    TError,
+    { id: number; data: BodyType<VerificationAppealDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDecideVerificationAppeal>>,
+  TError,
+  { id: number; data: BodyType<VerificationAppealDecisionInput> },
+  TContext
+> => {
+  const mutationKey = ["adminDecideVerificationAppeal"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDecideVerificationAppeal>>,
+    { id: number; data: BodyType<VerificationAppealDecisionInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminDecideVerificationAppeal(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDecideVerificationAppealMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDecideVerificationAppeal>>
+>;
+export type AdminDecideVerificationAppealMutationBody =
+  BodyType<VerificationAppealDecisionInput>;
+export type AdminDecideVerificationAppealMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Accept or reject a verification appeal
+ */
+export const useAdminDecideVerificationAppeal = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerificationAppeal>>,
+    TError,
+    { id: number; data: BodyType<VerificationAppealDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDecideVerificationAppeal>>,
+  TError,
+  { id: number; data: BodyType<VerificationAppealDecisionInput> },
+  TContext
+> => {
+  return useMutation(getAdminDecideVerificationAppealMutationOptions(options));
+};
+
+/**
+ * @summary List verification partner applications and approval status
+ */
+export const getAdminGetVerificationPartnersUrl = () => {
+  return `/api/admin/verification/partners`;
+};
+
+export const adminGetVerificationPartners = async (
+  options?: RequestInit,
+): Promise<AdminVerificationPartner[]> => {
+  return customFetch<AdminVerificationPartner[]>(
+    getAdminGetVerificationPartnersUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAdminGetVerificationPartnersQueryKey = () => {
+  return [`/api/admin/verification/partners`] as const;
+};
+
+export const getAdminGetVerificationPartnersQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetVerificationPartners>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationPartners>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminGetVerificationPartnersQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminGetVerificationPartners>>
+  > = ({ signal }) =>
+    adminGetVerificationPartners({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationPartners>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetVerificationPartnersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetVerificationPartners>>
+>;
+export type AdminGetVerificationPartnersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List verification partner applications and approval status
+ */
+
+export function useAdminGetVerificationPartners<
+  TData = Awaited<ReturnType<typeof adminGetVerificationPartners>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetVerificationPartners>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetVerificationPartnersQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Approve or reject a partner application after QQZ checks its basis and agreement
+ */
+export const getAdminDecideVerificationPartnerUrl = (id: number) => {
+  return `/api/admin/verification/partners/${id}/decision`;
+};
+
+export const adminDecideVerificationPartner = async (
+  id: number,
+  verificationPartnerDecisionInput: VerificationPartnerDecisionInput,
+  options?: RequestInit,
+): Promise<AdminVerificationPartner> => {
+  return customFetch<AdminVerificationPartner>(
+    getAdminDecideVerificationPartnerUrl(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(verificationPartnerDecisionInput),
+    },
+  );
+};
+
+export const getAdminDecideVerificationPartnerMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerificationPartner>>,
+    TError,
+    { id: number; data: BodyType<VerificationPartnerDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDecideVerificationPartner>>,
+  TError,
+  { id: number; data: BodyType<VerificationPartnerDecisionInput> },
+  TContext
+> => {
+  const mutationKey = ["adminDecideVerificationPartner"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDecideVerificationPartner>>,
+    { id: number; data: BodyType<VerificationPartnerDecisionInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminDecideVerificationPartner(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDecideVerificationPartnerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDecideVerificationPartner>>
+>;
+export type AdminDecideVerificationPartnerMutationBody =
+  BodyType<VerificationPartnerDecisionInput>;
+export type AdminDecideVerificationPartnerMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Approve or reject a partner application after QQZ checks its basis and agreement
+ */
+export const useAdminDecideVerificationPartner = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDecideVerificationPartner>>,
+    TError,
+    { id: number; data: BodyType<VerificationPartnerDecisionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDecideVerificationPartner>>,
+  TError,
+  { id: number; data: BodyType<VerificationPartnerDecisionInput> },
+  TContext
+> => {
+  return useMutation(getAdminDecideVerificationPartnerMutationOptions(options));
 };

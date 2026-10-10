@@ -1239,3 +1239,679 @@ export const AdminDeleteServiceParams = zod.object({
 export const AdminDeleteServiceResponse = zod.object({
   message: zod.string(),
 });
+
+/**
+ * @summary List entities available to the current account
+ */
+export const GetMyEntitiesResponseItem = zod.object({
+  id: zod.number(),
+  entityType: zod.enum([
+    "individual_professional",
+    "company_business",
+    "asset_owner",
+    "verification_partner",
+  ]),
+  displayName: zod.string(),
+  description: zod.string().nullable(),
+  countryCode: zod.string(),
+  status: zod.string(),
+  membershipRole: zod.string(),
+  createdAt: zod.string(),
+  registrationNumber: zod.string().nullable(),
+  industry: zod.string().nullable(),
+  address: zod.string().nullable(),
+  partnerStatus: zod.string().nullable(),
+  agreementStatus: zod.string().nullable(),
+  authorizingBody: zod.string().nullable(),
+  authorizationBasis: zod.string().nullable(),
+  scopeTypes: zod.array(zod.string()),
+  affiliations: zod.array(
+    zod.object({
+      id: zod.number(),
+      companyEntityId: zod.number(),
+      individualEntityId: zod.number(),
+      individualName: zod.string(),
+      userId: zod.number(),
+      relationshipType: zod.string(),
+      status: zod.string(),
+    }),
+  ),
+});
+export const GetMyEntitiesResponse = zod.array(GetMyEntitiesResponseItem);
+
+/**
+ * @summary Create a distinct entity profile
+ */
+export const createEntityBodyDisplayNameMin = 2;
+export const createEntityBodyDisplayNameMax = 160;
+
+export const createEntityBodyDescriptionMax = 2000;
+
+export const createEntityBodyCountryCodeMin = 2;
+export const createEntityBodyCountryCodeMax = 2;
+
+export const createEntityBodyRegistrationNumberMax = 120;
+
+export const createEntityBodyIndustryMax = 160;
+
+export const createEntityBodyAddressMax = 500;
+
+export const createEntityBodyAuthorizingBodyMax = 200;
+
+export const createEntityBodyAuthorizationBasisMax = 2000;
+
+export const CreateEntityBody = zod.object({
+  entityType: zod.enum([
+    "individual_professional",
+    "company_business",
+    "asset_owner",
+    "verification_partner",
+  ]),
+  displayName: zod
+    .string()
+    .min(createEntityBodyDisplayNameMin)
+    .max(createEntityBodyDisplayNameMax),
+  description: zod.string().max(createEntityBodyDescriptionMax).optional(),
+  countryCode: zod
+    .string()
+    .min(createEntityBodyCountryCodeMin)
+    .max(createEntityBodyCountryCodeMax)
+    .optional(),
+  registrationNumber: zod
+    .string()
+    .max(createEntityBodyRegistrationNumberMax)
+    .optional(),
+  industry: zod.string().max(createEntityBodyIndustryMax).optional(),
+  address: zod.string().max(createEntityBodyAddressMax).optional(),
+  authorizingBody: zod
+    .string()
+    .max(createEntityBodyAuthorizingBodyMax)
+    .optional(),
+  authorizationBasis: zod
+    .string()
+    .max(createEntityBodyAuthorizationBasisMax)
+    .optional(),
+  scopeTypes: zod
+    .array(
+      zod.enum([
+        "identity",
+        "company_registration",
+        "business_document",
+        "professional_qualification",
+        "professional_certification",
+        "document_attestation",
+        "director_representative",
+        "ownership_document",
+      ]),
+    )
+    .optional(),
+});
+
+/**
+ * @summary Get a public entity profile and its exact verified scopes
+ */
+export const GetPublicEntityParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPublicEntityResponse = zod.object({
+  id: zod.number(),
+  entityType: zod.enum([
+    "individual_professional",
+    "company_business",
+    "asset_owner",
+    "verification_partner",
+  ]),
+  displayName: zod.string(),
+  description: zod.string().nullable(),
+  countryCode: zod.string(),
+  badges: zod.array(
+    zod.object({
+      verificationType: zod.string(),
+      label: zod.string(),
+      status: zod.enum(["VERIFIED"]),
+      verificationCode: zod.string(),
+      verifiedAt: zod.string(),
+      expiresAt: zod.string().nullable(),
+    }),
+  ),
+});
+
+/**
+ * @summary List members and invitations for an entity
+ */
+export const GetEntityMembersParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetEntityMembersResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  userId: zod.number().nullable(),
+  email: zod.string(),
+  membershipRole: zod.string(),
+  status: zod.enum(["invited", "active", "revoked"]),
+  invitedBy: zod.number(),
+  acceptedAt: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+export const GetEntityMembersResponse = zod.array(GetEntityMembersResponseItem);
+
+/**
+ * @summary Invite an account to an entity with a defined membership
+ */
+export const InviteEntityMemberParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const InviteEntityMemberBody = zod.object({
+  email: zod.string().email(),
+  membershipRole: zod.enum([
+    "employee",
+    "director",
+    "representative",
+    "affiliated_professional",
+    "verifier",
+  ]),
+});
+
+/**
+ * @summary Revoke a member or cancel an invitation
+ */
+export const RevokeEntityMemberParams = zod.object({
+  id: zod.coerce.number(),
+  membershipId: zod.coerce.number(),
+});
+
+export const RevokeEntityMemberResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List invitations addressed to the current account
+ */
+export const GetMyEntityInvitationsResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  userId: zod.number().nullable(),
+  email: zod.string(),
+  membershipRole: zod.string(),
+  status: zod.enum(["invited", "active", "revoked"]),
+  invitedBy: zod.number(),
+  acceptedAt: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+export const GetMyEntityInvitationsResponse = zod.array(
+  GetMyEntityInvitationsResponseItem,
+);
+
+/**
+ * @summary Accept an entity invitation addressed to the current account
+ */
+export const AcceptEntityInvitationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AcceptEntityInvitationResponse = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  userId: zod.number().nullable(),
+  email: zod.string(),
+  membershipRole: zod.string(),
+  status: zod.enum(["invited", "active", "revoked"]),
+  invitedBy: zod.number(),
+  acceptedAt: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Link an individual professional profile to a company
+ */
+export const CreateCompanyAffiliationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateCompanyAffiliationBody = zod.object({
+  individualEntityId: zod.number(),
+  relationshipType: zod.enum([
+    "employee",
+    "director",
+    "representative",
+    "affiliated_professional",
+  ]),
+});
+
+/**
+ * @summary List the entity's verification records without confidential files
+ */
+export const GetEntityVerificationRecordsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetEntityVerificationRecordsResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+export const GetEntityVerificationRecordsResponse = zod.array(
+  GetEntityVerificationRecordsResponseItem,
+);
+
+/**
+ * @summary Request verification of a specific entity or document scope
+ */
+export const CreateEntityVerificationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateEntityVerificationBody = zod.object({
+  verificationType: zod.enum([
+    "identity",
+    "company_registration",
+    "business_document",
+    "professional_qualification",
+    "professional_certification",
+    "document_attestation",
+    "director_representative",
+    "ownership_document",
+  ]),
+  reviewAt: zod.date().nullish(),
+});
+
+/**
+ * @summary Appeal a rejected verification decision
+ */
+export const AppealVerificationDecisionParams = zod.object({
+  id: zod.coerce.number(),
+  recordId: zod.coerce.number(),
+});
+
+export const appealVerificationDecisionBodyMessageMin = 20;
+export const appealVerificationDecisionBodyMessageMax = 3000;
+
+export const AppealVerificationDecisionBody = zod.object({
+  message: zod
+    .string()
+    .min(appealVerificationDecisionBodyMessageMin)
+    .max(appealVerificationDecisionBodyMessageMax),
+});
+
+/**
+ * @summary Attach privately stored evidence to a verification request
+ */
+export const AddVerificationEvidenceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const addVerificationEvidenceBodyObjectPathMin = 9;
+export const addVerificationEvidenceBodyObjectPathMax = 500;
+
+export const addVerificationEvidenceBodyFileNameMax = 255;
+
+export const addVerificationEvidenceBodyMimeTypeMax = 120;
+
+export const addVerificationEvidenceBodyByteSizeMax = 15000000;
+
+export const AddVerificationEvidenceBody = zod.object({
+  objectPath: zod
+    .string()
+    .min(addVerificationEvidenceBodyObjectPathMin)
+    .max(addVerificationEvidenceBodyObjectPathMax),
+  fileName: zod.string().min(1).max(addVerificationEvidenceBodyFileNameMax),
+  mimeType: zod.string().max(addVerificationEvidenceBodyMimeTypeMax),
+  byteSize: zod.number().min(1).max(addVerificationEvidenceBodyByteSizeMax),
+});
+
+/**
+ * @summary Download evidence after an access check
+ */
+export const DownloadVerificationEvidenceParams = zod.object({
+  id: zod.coerce.number(),
+  evidenceId: zod.coerce.number(),
+});
+
+/**
+ * @summary List cases assigned to the current approved partner
+ */
+export const GetPartnerVerificationRecordsResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+export const GetPartnerVerificationRecordsResponse = zod.array(
+  GetPartnerVerificationRecordsResponseItem,
+);
+
+/**
+ * @summary Submit a partner recommendation for an assigned case
+ */
+export const SubmitPartnerVerificationResultParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const submitPartnerVerificationResultBodyNotesMax = 3000;
+
+export const SubmitPartnerVerificationResultBody = zod.object({
+  result: zod.enum(["VERIFIED", "REJECTED"]),
+  notes: zod.string().max(submitPartnerVerificationResultBodyNotesMax),
+});
+
+export const SubmitPartnerVerificationResultResponse = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Publicly check a QQZ verification ID without exposing documents
+ */
+export const GetPublicVerificationParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const GetPublicVerificationResponse = zod.object({
+  verificationCode: zod.string(),
+  entityType: zod.string(),
+  entityName: zod.string(),
+  countryCode: zod.string(),
+  verificationType: zod.string(),
+  status: zod.enum(["VERIFIED", "EXPIRED", "REVOKED"]),
+  verifiedAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  verifierOrganization: zod.string().nullable(),
+});
+
+/**
+ * @summary List verification cases for QQZ administration
+ */
+export const AdminGetVerificationRecordsResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string(),
+  entityType: zod.string(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerEntityId: zod.number().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  partnerResult: zod.string().nullable(),
+  partnerNotes: zod.string().nullable(),
+  verifierOrganization: zod.string().nullable(),
+  notes: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+  audit: zod.array(
+    zod.object({
+      id: zod.number(),
+      actorId: zod.number().nullable(),
+      action: zod.string(),
+      previousStatus: zod.string().nullable(),
+      newStatus: zod.string().nullable(),
+      details: zod.record(zod.string(), zod.unknown()),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+export const AdminGetVerificationRecordsResponse = zod.array(
+  AdminGetVerificationRecordsResponseItem,
+);
+
+/**
+ * @summary Assign a case to an approved partner within its country and scope
+ */
+export const AdminAssignVerificationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const adminAssignVerificationBodyNotesMax = 2000;
+
+export const AdminAssignVerificationBody = zod.object({
+  partnerEntityId: zod.number(),
+  notes: zod.string().max(adminAssignVerificationBodyNotesMax).optional(),
+});
+
+export const AdminAssignVerificationResponse = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Approve or reject a partner result and close the review
+ */
+export const AdminDecideVerificationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const adminDecideVerificationBodyNotesMax = 3000;
+
+export const AdminDecideVerificationBody = zod.object({
+  decision: zod.enum(["VERIFIED", "REJECTED", "REVOKED"]),
+  notes: zod.string().max(adminDecideVerificationBodyNotesMax).optional(),
+  expiresAt: zod.date().nullish(),
+  reviewAt: zod.date().nullish(),
+});
+
+export const AdminDecideVerificationResponse = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string().nullable(),
+  verificationType: zod.string(),
+  countryCode: zod.string(),
+  status: zod.enum([
+    "PENDING",
+    "UNDER_REVIEW",
+    "VERIFIED",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+  ]),
+  verificationCode: zod.string().nullable(),
+  assignedPartnerOrganization: zod.string().nullable(),
+  verifiedAt: zod.string().nullable(),
+  reviewAt: zod.string().nullable(),
+  expiresAt: zod.string().nullable(),
+  createdAt: zod.string(),
+  evidence: zod.array(
+    zod.object({
+      id: zod.number(),
+      fileName: zod.string(),
+      mimeType: zod.string(),
+      byteSize: zod.number(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Accept or reject a verification appeal
+ */
+export const AdminDecideVerificationAppealParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const adminDecideVerificationAppealBodyNotesMax = 3000;
+
+export const AdminDecideVerificationAppealBody = zod.object({
+  decision: zod.enum(["accepted", "rejected"]),
+  notes: zod.string().max(adminDecideVerificationAppealBodyNotesMax).optional(),
+});
+
+export const AdminDecideVerificationAppealResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List verification partner applications and approval status
+ */
+export const AdminGetVerificationPartnersResponseItem = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string(),
+  countryCode: zod.string(),
+  authorizingBody: zod.string(),
+  authorizationBasis: zod.string(),
+  scopeTypes: zod.array(zod.string()),
+  agreementStatus: zod.enum(["pending", "signed", "expired"]),
+  status: zod.enum(["pending", "approved", "rejected", "suspended"]),
+  validUntil: zod.string().nullable(),
+  submittedBy: zod.number(),
+});
+export const AdminGetVerificationPartnersResponse = zod.array(
+  AdminGetVerificationPartnersResponseItem,
+);
+
+/**
+ * @summary Approve or reject a partner application after QQZ checks its basis and agreement
+ */
+export const AdminDecideVerificationPartnerParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const adminDecideVerificationPartnerBodyAgreementReferenceMax = 300;
+
+export const AdminDecideVerificationPartnerBody = zod.object({
+  status: zod.enum(["approved", "rejected", "suspended"]),
+  agreementStatus: zod.enum(["signed", "pending", "expired"]),
+  agreementReference: zod
+    .string()
+    .max(adminDecideVerificationPartnerBodyAgreementReferenceMax)
+    .optional(),
+  validUntil: zod.date().nullish(),
+});
+
+export const AdminDecideVerificationPartnerResponse = zod.object({
+  id: zod.number(),
+  entityId: zod.number(),
+  entityName: zod.string(),
+  countryCode: zod.string(),
+  authorizingBody: zod.string(),
+  authorizationBasis: zod.string(),
+  scopeTypes: zod.array(zod.string()),
+  agreementStatus: zod.enum(["pending", "signed", "expired"]),
+  status: zod.enum(["pending", "approved", "rejected", "suspended"]),
+  validUntil: zod.string().nullable(),
+  submittedBy: zod.number(),
+});
