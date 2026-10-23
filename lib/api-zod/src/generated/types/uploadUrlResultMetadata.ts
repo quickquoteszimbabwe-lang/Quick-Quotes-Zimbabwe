@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequestUploadUrlResponseMetadata = {
+export type UploadUrlResultMetadata = {
   name: string;
   size: number;
   contentType: string;

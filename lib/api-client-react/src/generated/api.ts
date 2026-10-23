@@ -63,7 +63,6 @@ import type {
   Quote,
   RegisterRequest,
   RequestUploadUrlRequest,
-  RequestUploadUrlResponse,
   Review,
   SelectQuoteRequest,
   Service,
@@ -77,6 +76,7 @@ import type {
   UpdateProfileRequest,
   UpdateServiceRequest,
   UpdateSubcategoryRequest,
+  UploadUrlResult,
   User,
   UserProfile,
   VerificationAppealDecisionInput,
@@ -2150,8 +2150,8 @@ export const getRequestUploadUrlUrl = () => {
 export const requestUploadUrl = async (
   requestUploadUrlRequest: RequestUploadUrlRequest,
   options?: RequestInit,
-): Promise<RequestUploadUrlResponse> => {
-  return customFetch<RequestUploadUrlResponse>(getRequestUploadUrlUrl(), {
+): Promise<UploadUrlResult> => {
+  return customFetch<UploadUrlResult>(getRequestUploadUrlUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
