@@ -34,30 +34,6 @@ export const entitiesTable = pgTable(
   }),
 );
 
-export const entityMembershipsTable = pgTable(
-  "qqz_entity_memberships",
-  {
-    id: serial("id").primaryKey(),
-    entityId: integer("entity_id").notNull(),
-    userId: integer("user_id"),
-    email: text("email").notNull(),
-    membershipRole: text("membership_role").notNull(),
-    status: text("status").notNull().default("invited"),
-    invitedBy: integer("invited_by").notNull(),
-    acceptedAt: timestamp("accepted_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  },
-  (table) => ({
-    legacyProfessionalUnique: uniqueIndex("qqz_entities_legacy_professional_uq").on(
-      table.legacyProfessionalId,
-    ),
-    legacyCompanyUnique: uniqueIndex("qqz_entities_legacy_company_uq").on(
-      table.legacyCompanyId,
-    ),
-  }),
-);
-
 export const companyAffiliationsTable = pgTable(
   "qqz_company_affiliations",
   {

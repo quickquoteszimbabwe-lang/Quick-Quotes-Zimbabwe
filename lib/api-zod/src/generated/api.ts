@@ -25,6 +25,9 @@ export const GetMeResponse = zod.object({
   phone: zod.string().nullish(),
   role: zod.enum(["customer", "professional", "admin"]),
   suspended: zod.boolean(),
+  phoneVerified: zod.boolean(),
+  idVerified: zod.boolean(),
+  faceVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -33,7 +36,7 @@ export const GetMeResponse = zod.object({
  */
 export const RegisterBody = zod.object({
   name: zod.string(),
-  email: zod.string(),
+  email: zod.string().email(),
   phone: zod.string().nullish(),
   password: zod.string(),
   role: zod.enum(["customer", "professional"]),
@@ -43,7 +46,7 @@ export const RegisterBody = zod.object({
  * @summary Login
  */
 export const LoginBody = zod.object({
-  email: zod.string(),
+  email: zod.string().email(),
   password: zod.string(),
 });
 
@@ -57,6 +60,9 @@ export const LoginResponse = zod.object({
     phone: zod.string().nullish(),
     role: zod.enum(["customer", "professional", "admin"]),
     suspended: zod.boolean(),
+    phoneVerified: zod.boolean(),
+    idVerified: zod.boolean(),
+    faceVerified: zod.boolean(),
     createdAt: zod.string(),
   }),
 });
@@ -75,7 +81,7 @@ export const GetProfileResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   publicHandle: zod.string(),
-  email: zod.string(),
+  email: zod.string().email(),
   phone: zod.string().nullish(),
   role: zod.string(),
   suspended: zod.boolean(),
@@ -110,7 +116,7 @@ export const UpdateProfileResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   publicHandle: zod.string(),
-  email: zod.string(),
+  email: zod.string().email(),
   phone: zod.string().nullish(),
   role: zod.string(),
   suspended: zod.boolean(),
@@ -739,6 +745,9 @@ export const AdminGetUsersResponseItem = zod.object({
   phone: zod.string().nullish(),
   role: zod.enum(["customer", "professional", "admin"]),
   suspended: zod.boolean(),
+  phoneVerified: zod.boolean(),
+  idVerified: zod.boolean(),
+  faceVerified: zod.boolean(),
   createdAt: zod.string(),
 });
 export const AdminGetUsersResponse = zod.array(AdminGetUsersResponseItem);

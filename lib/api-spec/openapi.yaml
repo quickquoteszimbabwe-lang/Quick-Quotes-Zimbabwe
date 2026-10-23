@@ -542,7 +542,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RequestUploadUrlResponse"
+                $ref: "#/components/schemas/UploadUrlResult"
 
   /payments:
     get:
@@ -1714,6 +1714,12 @@ components:
           enum: [customer, professional, admin]
         suspended:
           type: boolean
+        phoneVerified:
+          type: boolean
+        idVerified:
+          type: boolean
+        faceVerified:
+          type: boolean
         createdAt:
           type: string
       required:
@@ -1723,6 +1729,9 @@ components:
         - email
         - role
         - suspended
+        - phoneVerified
+        - idVerified
+        - faceVerified
         - createdAt
 
     UserProfile:
@@ -1736,6 +1745,7 @@ components:
           type: string
         email:
           type: string
+          format: email
         phone:
           type: ["string", "null"]
         role:
@@ -1800,6 +1810,7 @@ components:
           type: string
         email:
           type: string
+          format: email
         phone:
           type: ["string", "null"]
         password:
@@ -1818,6 +1829,7 @@ components:
       properties:
         email:
           type: string
+          format: email
         password:
           type: string
       required:
@@ -2369,7 +2381,7 @@ components:
         - size
         - contentType
 
-    RequestUploadUrlResponse:
+    UploadUrlResult:
       type: object
       properties:
         uploadURL:

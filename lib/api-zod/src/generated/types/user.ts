@@ -16,5 +16,8 @@ export interface User {
   phone?: string | null;
   role: UserRole;
   suspended: boolean;
+  phoneVerified: boolean;
+  idVerified: boolean;
+  faceVerified: boolean;
   createdAt: string;
 }

@@ -34,6 +34,9 @@ export interface User {
   phone?: string | null;
   role: UserRole;
   suspended: boolean;
+  phoneVerified: boolean;
+  idVerified: boolean;
+  faceVerified: boolean;
   createdAt: string;
 }
 
@@ -533,16 +536,16 @@ export interface RequestUploadUrlRequest {
   contentType: string;
 }
 
-export type RequestUploadUrlResponseMetadata = {
+export type UploadUrlResultMetadata = {
   name: string;
   size: number;
   contentType: string;
 };
 
-export interface RequestUploadUrlResponse {
+export interface UploadUrlResult {
   uploadURL: string;
   objectPath: string;
-  metadata: RequestUploadUrlResponseMetadata;
+  metadata: UploadUrlResultMetadata;
 }
 
 export interface CreateNewsRequest {

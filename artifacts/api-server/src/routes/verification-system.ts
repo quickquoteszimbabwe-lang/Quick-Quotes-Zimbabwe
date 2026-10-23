@@ -17,8 +17,8 @@ import {
   GetPartnerVerificationRecordsResponse,
   GetPublicVerificationParams,
   GetPublicVerificationResponse,
-  PartnerVerificationResultBody,
-  PartnerVerificationResultParams,
+  SubmitPartnerVerificationResultBody,
+  SubmitPartnerVerificationResultParams,
 } from "@workspace/api-zod";
 import {
   entitiesTable,
@@ -246,8 +246,8 @@ router.get("/verification/partner/records", requireAuth, async (req: AuthRequest
 
 router.post("/verification/partner/records/:id/result", requireAuth, async (req: AuthRequest, res) => {
   const rawId = parsedId(req.params.id);
-  const parsed = PartnerVerificationResultParams.safeParse(req.params);
-  const body = PartnerVerificationResultBody.safeParse(req.body);
+  const parsed = SubmitPartnerVerificationResultParams.safeParse(req.params);
+  const body = SubmitPartnerVerificationResultBody.safeParse(req.body);
   if (!rawId || !parsed.success || !body.success) {
     res.status(400).json({ error: "Invalid partner result" });
     return;

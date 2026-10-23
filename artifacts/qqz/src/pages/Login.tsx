@@ -4,6 +4,30 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLogin } from "@workspace/api-client-react";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 
+function getSignInErrorMessage(error: unknown): string {
+  const apiError = error as {
+    status?: number;
+    data?: { error?: unknown } | null;
+  } | null;
+
+  if (apiError?.status === 401 && apiError.data?.error === "Account suspended") {
+    return "This account is temporarily suspended. Contact QQZ support for help.";
+  }
+  if (apiError?.status === 401) {
+    return "Email or password is incorrect. Check your details and try again.";
+  }
+  if (apiError?.status === 400) {
+    return "Enter a valid email address and password.";
+  }
+  if (apiError?.status === 429) {
+    return "Too many sign-in attempts. Wait a moment and try again.";
+  }
+  if (typeof apiError?.status === "number" && apiError.status >= 500) {
+    return "Sign-in is temporarily unavailable. Please try again shortly.";
+  }
+  return "We couldn't connect to QQZ. Check your connection and try again.";
+}
+
 export default function Login() {
   const { login } = useAuth();
   const [, navigate] = useLocation();
@@ -17,8 +41,8 @@ export default function Login() {
     event.preventDefault();
     setError("");
     signIn.mutate({ data: { email: email.trim(), password } }, {
-      onSuccess: (result) => { login(result.token, { ...result.user, phone: result.user.phone ?? null, phoneVerified: (result.user as any).phoneVerified ?? false, idVerified: (result.user as any).idVerified ?? false, faceVerified: (result.user as any).faceVerified ?? false }); navigate("/home"); },
-      onError: (reason: any) => setError(reason?.data?.error || reason?.message || "We could not sign you in. Check your details and try again."),
+      onSuccess: (result) => { login(result.token, { ...result.user, phone: result.user.phone ?? null }); navigate("/home"); },
+      onError: (reason: unknown) => setError(getSignInErrorMessage(reason)),
     });
   }
 

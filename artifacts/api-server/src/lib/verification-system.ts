@@ -176,14 +176,14 @@ export async function hasConflictOfInterest(
 ) {
   const [targetMembers, partnerMembers] = await Promise.all([
     db
-    .select({ userId: entityMembershipsTable.userId })
-    .from(entityMembershipsTable)
-    .where(
-      and(
-        eq(entityMembershipsTable.entityId, verificationEntityId),
-        eq(entityMembershipsTable.status, "active"),
+      .select({ userId: entityMembershipsTable.userId })
+      .from(entityMembershipsTable)
+      .where(
+        and(
+          eq(entityMembershipsTable.entityId, verificationEntityId),
+          eq(entityMembershipsTable.status, "active"),
+        ),
       ),
-    );
     db
       .select({ userId: entityMembershipsTable.userId })
       .from(entityMembershipsTable)
